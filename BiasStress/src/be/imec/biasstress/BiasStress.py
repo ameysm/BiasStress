@@ -6,6 +6,7 @@ Created on Sep 4, 2013
 from PyQt4 import QtGui
 from views.main_view import Ui_MainWindow
 from util.Logger import Logger
+from be.imec.biasstress.controllers.TFTController import TFTController
 
 class BiasStress(QtGui.QMainWindow):
     '''
@@ -23,13 +24,17 @@ class BiasStress(QtGui.QMainWindow):
     def initialize_gui(self):
         self.__logger = Logger(self.ui.logConsole)
         self.register_gui_functions()
-        self.__logger.log("###### Welcome to BiasStress ######")
+        self.__logger.log(Logger.INFO,"###### Welcome to BiasStress ######")
         self.checkforDevices()
         
     def register_gui_functions(self):
         self.ui.actionQuit.triggered.connect(QtGui.qApp.quit)
+        self.__tftController = TFTController(self,self.ui,self.__logger)
+        self.ui.resetTFT.clicked.connect(self.__tftController.resetTFTValues)
+        self.ui.clearLogAction.clicked.connect(self.__logger.clearLog)
+        self.ui.saveLogAction.clicked.connect(self.__logger.saveLog)
         pass
     
     def checkforDevices(self):
         self.__listDevices = []
-        self.__logger.log("0 devices were found")
+        self.__logger.log(Logger.WARNING,"0 devices were found")

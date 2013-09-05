@@ -7,15 +7,15 @@ Created on Sep 4, 2013
 class TFT(object):
     '''
     Default vars for a TFT
+    __WARNING__ These values are used thoughout the program, make sure these are the correct default values
     '''
-    DEFAULT_VGS_START = -20
-    DEFAULT_VGS_END=20
-    DEFAULT_VDS=1
-    DEFAULT_STEP=0.2
+    DEFAULT_VGS_START = '-20'
+    DEFAULT_VGS_END= '20'
+    DEFAULT_VDS='1'
+    DEFAULT_STEP='0.2'
     
     
     def __init__(self):
-        
         self.__vgStart = TFT.DEFAULT_VGS_START
         self.__vgEnd =TFT.DEFAULT_VGS_END
         self.__vds = TFT.DEFAULT_VDS
