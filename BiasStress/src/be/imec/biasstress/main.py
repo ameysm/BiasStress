@@ -13,3 +13,4 @@ if __name__ == '__main__':
     controller = BiasStress()
     controller.show()
     sys.exit(app.exec_())
+

@@ -6,6 +6,7 @@ Created on Sep 4, 2013
 from datetime import datetime
 from PyQt4.QtGui import QColor
 from PyQt4 import QtGui,QtCore
+from distutils.log import INFO
 
 class Logger(object):
    
@@ -42,6 +43,9 @@ class Logger(object):
     def saveLog(self):
         filename = "biasstress_log_"+str(datetime.now().strftime("%d%m%y-%H%M"))
         path = QtGui.QFileDialog.getSaveFileName(None, QtCore.QString('Open file'), QtCore.QString(filename),".txt")
+        if path=='':
+            return
         text_file = open(path, "w")
         text_file.write(self.__console.toPlainText())
         text_file.close()
+        self.log(Logger.INFO, "Log saved succesfully in "+path)
