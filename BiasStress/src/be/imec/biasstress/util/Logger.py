@@ -1,12 +1,14 @@
 '''
 Created on Sep 4, 2013
 
+This class enables the software to log every action the users perform in the program. For now three distinctions are made, Info, warning or error
+messages.
+
 @author: Incalza Dario
 '''
 from datetime import datetime
 from PyQt4.QtGui import QColor
 from PyQt4 import QtGui,QtCore
-from distutils.log import INFO
 
 class Logger(object):
    

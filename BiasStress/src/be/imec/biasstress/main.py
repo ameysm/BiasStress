@@ -1,6 +1,8 @@
 '''
 Created on Sep 4, 2013
 
+This is the main entry point of the program.
+
 @author: Incalza Dario
 '''
 from PyQt4 import QtGui

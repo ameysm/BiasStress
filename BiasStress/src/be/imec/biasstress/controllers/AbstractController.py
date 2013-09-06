@@ -12,6 +12,6 @@ class AbstractController(object):
     def __init__(self,visa):
         self.__visa=visa
     
-    def getVisaController(self):
+    def getDeviceController(self):
         return self.__visa
         

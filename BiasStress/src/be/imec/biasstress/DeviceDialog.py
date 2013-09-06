@@ -1,6 +1,8 @@
 '''
 Created on Sep 5, 2013
 
+This class represents a dialog that enables the user to add an SMU device on a particular address and channel.
+
 @author: adminssteudel
 '''
 from PyQt4 import QtGui,QtCore
@@ -15,16 +17,19 @@ class DeviceDialog(QDialog):
     def __init__(self,parent,deviceManager,logger):
         self.__deviceManager = deviceManager
         self.__logger = logger
-        self.NODES = dict(Vg=0x00, Vd=0x01, Vs=0x02)
-        self.NODES_ENTRIES=[]
-        for k in self.NODES:
-            self.NODES_ENTRIES.append(QtCore.QString(k))
         QtGui.QWidget.__init__(self, parent)
         self.dialog = Ui_addDeviceDialog()
         self.dialog.setupUi(self)
-        self.dialog.controllingVoltageValue.addItems(self.NODES_ENTRIES)
+        self.initializeNodeBox()
         self.dialog.pushButton.clicked.connect(self.addDevice)
-    
+    def initializeNodeBox(self):
+        
+        availableNodes = []
+        for k in SMU.NODES:
+            if self.__deviceManager.getDeviceMappedToNode(k) == None:
+                availableNodes.append(QtCore.QString(k))
+        self.dialog.controllingVoltageValue.addItems(availableNodes)
+        
     def addDevice(self):
         address = str(self.dialog.adressValue.text())
         channel = str(self.dialog.channelValue.currentText())
@@ -33,9 +38,12 @@ class DeviceDialog(QDialog):
         if smu != None:
             succes = self.__deviceManager.addDevice(smu)
             if succes == True:
-                self.__logger.log(Logger.INFO,'Device on address '+address+' and operating on channel '+channel+' is loaded succesfully')
+                self.__logger.log(Logger.INFO,'Device address '+address+' and operating on channel '+channel+' is loaded succesfully and mapped to node : '+smu.getNode()+' \n Additional info :: '+smu.getName())
+            else:
+                self.__logger.log(Logger.ERROR,'Device on address '+address+' and operating on channel '+channel+' is not loaded succesfully. Please check if the channel or node is not already taken ?')
+                
         else:
-            self.__logger.log(Logger.ERROR,'Device on address '+address+' and operating on channel '+channel+' is not loaded succesfully. Please check GPIB/USB connection and ensure the device is powered on before trying again.')
+            self.__logger.log(Logger.ERROR,'Device on address '+address+' and operating on channel '+channel+' is not loaded succesfully. Seems the connection was no initialized correctly. Please ensure the device is turned on and connected through GPIB/USB.')
         self.close() 
         
     def tryDeviceConnection(self,address,channel,node):

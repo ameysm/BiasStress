@@ -6,11 +6,12 @@ Created on Sep 5, 2013
 from be.imec.biasstress.controllers.AbstractController import AbstractController
 from be.imec.biasstress.models.TFT import TFT
 from be.imec.biasstress.util.Logger import Logger
+from be.imec.biasstress.hardware.SMU import TFT_RUN
 
 class TFTController(AbstractController):
     
-    def __init__(self,visacontroller,ui,logger):
-        AbstractController.__init__(self, visacontroller)
+    def __init__(self,devicecontroller,ui,logger):
+        AbstractController.__init__(self, devicecontroller)
         self.__ui=ui
         self.__currentTft = TFT()
         self.__logger=logger
@@ -29,4 +30,23 @@ class TFTController(AbstractController):
         self.__ui.vgend.setText(self.__currentTft.getVgEnd())
         self.__ui.vds.setText(self.__currentTft.getVds())
         self.__ui.step.setText(self.__currentTft.getStep())
+        
+    def tftRun(self):
+        Vgs = int(self.__ui.vgstart.text())
+        Vge = int(self.__ui.vgend.text())
+        step = float(self.__ui.step.text())
+        Vds = int(self.__ui.vds.text())
+        gatedevice = self.getDeviceController().getDeviceMappedToNode('Vg')
+        sourcedevice = self.getDeviceController().getDeviceMappedToNode('Vs')
+        
+        if gatedevice == None or sourcedevice == None:
+            self.__logger.log(Logger.ERROR,"No devices are assigned to the gate and/or source. To be able to perform a sweep at least two devices need to be attached, node Vg and Vs need to be mapped to a channel/device")
+        tftrun = TFT_RUN(gatedevice,sourcedevice)
+        vgs, igs, ids = tftrun.measureTFT(Vgs, Vge, step, Vds)
+        print vgs
+        print igs
+        print ids
+        return (vgs,igs,ids)
+        
+        
         

@@ -1,6 +1,8 @@
 '''
 Created on Sep 4, 2013
 
+This class represents an TFT run. Default values are given.
+
 @author: Incalza Dario
 '''
 
