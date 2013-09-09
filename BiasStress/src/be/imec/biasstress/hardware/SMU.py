@@ -6,7 +6,7 @@ One for every channel.
 
 @author: Incalza Dario
 '''
-import visa
+import visa,os
 from numpy.ma.core import ids
 
 class SMU(object):
@@ -44,8 +44,26 @@ class SMU(object):
         """ closes the VISA instance (I think) """
         self.__device.close()
 
-
-    def measure_current( self):
+    
+    def set_current_compliance( self, compliance ):
+        """ Set max output current level """
+        if self.__channel=='A':
+            self.__device.write( "smua.source.limiti = %s" % compliance )
+        elif self.__channel=='B':
+            self.__device.write( "smub.source.limiti = %s" % compliance )
+        else:
+            raise ValueError("Invalid channel sent to function set_current_compliance")
+             
+    def set_voltage_compliance(self,compliance):
+        """ Set max output current level """
+        if self.__channel=='A':
+            self.__device.write( "smua.source.limitv = %s" % compliance )
+        elif self.__channel=='B':
+            self.__device.write( "smub.source.limitv = %s" % compliance )
+        else:
+            raise ValueError("Invalid channel sent to function set_current_compliance")
+        
+    def measure_current(self):
         """ queries instrument, returns value """
         if self.__channel=='A':
             return self.__device.ask( "print(smua.measure.i())" )
@@ -66,8 +84,16 @@ class SMU(object):
 
 
     def reset(self):
+        
         self.__device.write( "reset()" )
-
+    
+    def clear_buffer(self):
+        if self.__channel=='A':
+            self.__device.write( "smua.nvbuffer1.clear()" )
+        elif self.__channel=='B':
+            self.__device.write( "smub.nvbuffer1.clear()" )
+        else:
+            raise ValueError("Invalid channel sent to function reset_channel")
 
     def reset_channel( self):
         if self.__channel=='A':
@@ -76,18 +102,6 @@ class SMU(object):
             self.__device.write( "smub.reset()" )
         else:
             raise ValueError("Invalid channel sent to function reset_channel")
-
-
-   
-
-    def set_current_compliance( self, compliance ):
-        """ Set max output current level """
-        if self.__channel=='A':
-            self.__device.write( "smua.source.limiti = %s" % compliance )
-        elif self.__channel=='B':
-            self.__device.write( "smub.source.limiti = %s" % compliance )
-        else:
-            raise ValueError("Invalid channel sent to function set_current_compliance")
 
         
     def set_output_on( self):
@@ -192,8 +206,35 @@ class SMU(object):
         return not result
     
     def read(self):
+        self.__device.timeout = 60
+        return self.__device.read()
+    
+    def loadandRunScriptfromFile(self, scriptFilePath):
+        scriptName, fileExtension = os.path.splitext(scriptFilePath)
+        f = file(scriptFilePath, "r")
+        flines = f.readlines()
+        f.close()
+        flines = "".join(flines)        
+        script = "loadandrunscript " + scriptName + "\n" + flines + "\n" + "endscript"
+        del self.__device.timeout
+        self.__device.write(script)
+        return script
+
+    def readBuffer(self, whichBuffer = "nvbuffer1", startIndex = 1, stopIndex = 1, split = ","):
+    
+        # !This is the formated string! Good to know.----Xuanwu
+        # !Be careful of the Tuple style (single,)
+        readBufferCommand = "printbuffer( %d,%d,%s.%s)" % (startIndex, stopIndex, self.getChannelAsScriptVariable(), whichBuffer)
+        self.__device.write(readBufferCommand)
         readout = self.__device.read()
+        readout = readout.split(",")
         return readout
+    
+    def getChannelAsScriptVariable(self):
+        channel = self.getChannel().lower()
+        return 'smu'+channel
+    
+    
 
 class TFT_RUN(object):
     def __init__(self,gatedevice,sourcedevice):

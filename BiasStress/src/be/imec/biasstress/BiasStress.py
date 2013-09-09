@@ -8,13 +8,11 @@ This represents the main program window connecting the GUI to the backend logic,
 from PyQt4 import QtGui,QtCore
 from views.main_view import Ui_MainWindow
 from util.Logger import Logger
-from be.imec.biasstress.controllers.TFTController import TFTController
 from DeviceDialog import DeviceDialog
-from controllers.DeviceController import DeviceController
 from scripts.ScriptController import ScriptController
 import os
 from scripts.Script import Script
-from plots.PlotController import PlotController
+from Controllers import TFTController,DeviceController,ComplianceController,PlotController
 
 class BiasStress(QtGui.QMainWindow):
     '''
@@ -32,7 +30,9 @@ class BiasStress(QtGui.QMainWindow):
         self.__deviceController = DeviceController(self.ui.deviceTable)
         self.__scriptController = ScriptController(self.ui.scriptTable)
         self.__plotController = PlotController(self.ui.plotWidget)
-        self.__tftController = TFTController(self.__deviceController,self.ui,self.__logger)
+        self.__tftController = TFTController(self.__deviceController,self.ui,self.__logger,self.__plotController)
+        self.__complianceController = ComplianceController(self.ui,self.__deviceController,self.__logger);
+        self.__deviceController.addDeviceListener(self.__complianceController)
         self.initialize_gui()
         
     

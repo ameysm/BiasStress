@@ -14,7 +14,7 @@ class TFT(object):
     DEFAULT_VGS_START = '-20'
     DEFAULT_VGS_END= '20'
     DEFAULT_VDS='1'
-    DEFAULT_STEP='0.2'
+    DEFAULT_STEP='2e-1'
     
     
     def __init__(self):

@@ -48,7 +48,7 @@ class DeviceDialog(QDialog):
         
     def tryDeviceConnection(self,address,channel,node):
         try:
-            device = visa.instrument('GPIB::'+str(address))
+            device = visa.instrument('GPIB::'+str(address),term_chars='\n', send_end=True)
             name = device.ask("*IDN?")
             smu = SMU(address,channel,node,device,name)
             return smu
