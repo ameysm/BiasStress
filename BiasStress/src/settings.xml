@@ -1,0 +1,10 @@
+<?xml version="1.0" ?> 
+<settings>
+	<TFT_characteristics>
+		<characteristic name="SiN" eps_r="8.5" t_ox="50" W="60" L="20"/>
+	</TFT_characteristics>
+	<constants>
+		<constant name="compliance_current" value="0.1"/>
+		<constant name="compliance_voltage" value="30"/>
+	</constants>
+</settings>

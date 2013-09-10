@@ -234,6 +234,14 @@ class SMU(object):
         channel = self.getChannel().lower()
         return 'smu'+channel
     
+    def loadScript(self,scriptfile):
+        f = file(scriptfile.getPath, "r")
+        flines = f.readlines()
+        f.close()
+        flines = "".join(flines)    
+        script = "loadscript " + scriptfile.getName() + "\n" + flines + "\n" + "endscript"
+        self.__device.write(script)
+    
     
 
 class TFT_RUN(object):

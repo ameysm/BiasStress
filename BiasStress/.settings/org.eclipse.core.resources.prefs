@@ -1,3 +1,4 @@
 eclipse.preferences.version=1
 encoding//src/be/imec/biasstress/views/main_view.py=utf-8
+encoding//src/be/imec/biasstress/views/script_loader.py=utf-8
 encoding//src/be/imec/biasstress/views/view_add_device.py=utf-8

@@ -23,7 +23,6 @@ class DeviceDialog(QDialog):
         self.initializeNodeBox()
         self.dialog.pushButton.clicked.connect(self.addDevice)
     def initializeNodeBox(self):
-        
         availableNodes = []
         for k in SMU.NODES:
             if self.__deviceManager.getDeviceMappedToNode(k) == None:

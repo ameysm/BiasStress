@@ -1,13 +1,11 @@
-import random
 from be.imec.biasstress.models.TFT import TFT
 from be.imec.biasstress.util.Logger import Logger
-from PyQt4.QtGui import QFileDialog
 from PyQt4 import QtCore
-import time
 from PyQt4 import QtGui
 from be.imec.biasstress.util.Toolbox import isANumber
-from hardware.SMU import SMU
-
+from be.imec.biasstress.ScriptLoaderDialog import ScriptLoaderDialog
+import numpy
+from matplotlib.pyplot import legend,gca
 
 '''
 Created on Sep 5, 2013
@@ -31,6 +29,7 @@ class TFTController(AbstractController):
     def __init__(self,devicecontroller,ui,logger,plotcontroller):
         AbstractController.__init__(self, devicecontroller)
         self.__ui=ui
+        self.__ui.tftwidget.setEnabled(False)
         self.__currentTft = TFT()
         self.__logger=logger
         self.__plotcontroller=plotcontroller
@@ -50,7 +49,32 @@ class TFTController(AbstractController):
         self.__ui.vds.setText(self.__currentTft.getVds())
         self.__ui.step.setText(self.__currentTft.getStep())
     
+
+    def performSweep(self, gateDevice, drainDevice, gate_smu, drain_smu, start, stop, step):
+        self.__logger.log(Logger.INFO, "Performing a TFT sweep from start gate voltage : %s and end gate voltage %e with step size %k", str(start), str(stop), str(step))
+        punten = int(abs(stop - start) / step) + 1
+        vgs = []
+        for i in range(0, punten):
+            gate = start + i * step
+            vgs.append(gate)
+        
+        script = 'for x = 1, ' + str(punten) + ' do ' + gate_smu + '.source.levelv = ' + str(start) + ' + x * ' + str(step) + ' delay(0.05) ' + gate_smu + '.measure.i(' + gate_smu + '.nvbuffer1)  ' + drain_smu + '.measure.i(' + drain_smu + '.nvbuffer1) waitcomplete() end count=' + gate_smu + '.nvbuffer1.n print("OK", count)'
+        gateDevice.set_output_on()
+        gateDevice.write(script)
+        readout = gateDevice.read()
+        status = readout[0:2]
+        if status == 'OK':
+            print "Script is done"
+        readings = int(float(readout.split('\t')[1]))
+        print readings
+        igs = gateDevice.readBuffer('nvbuffer1', 1, readings)
+        ids = drainDevice.readBuffer('nvbuffer1', 1, readings)
+        self.__plotcontroller.plotIV(ids, igs, vgs)
+        gateDevice.set_output_off()
+        return vgs, igs, ids
+
     def tftRun(self):
+        self.__logger.log(Logger.INFO,"Performing a TFT sweep. The GUI will be unresponsive during the run.")
         gateDevice = self.getDeviceController().getDeviceMappedToNode('Vg')
         drainDevice = self.getDeviceController().getDeviceMappedToNode('Vd')
         gateDevice.clear_buffer()
@@ -71,27 +95,15 @@ class TFTController(AbstractController):
         start = int(self.__ui.vgstart.text())
         stop = int(self.__ui.vgend.text())
         step = float(self.__ui.step.text());
-        punten = int(abs(stop-start) / step ) + 1
-        vgs = []
-        for i in range(0,punten):
-            gate = start + i * step
-            vgs.append(gate)
         
-        script = 'for x = 1, ' + str(punten) + ' do '+gate_smu+'.source.levelv = ' + str(start) + ' + x * ' + str(step) + ' delay(0.05) '+gate_smu+'.measure.i('+gate_smu+'.nvbuffer1)  '+drain_smu+'.measure.i('+drain_smu+'.nvbuffer1) waitcomplete() end count='+gate_smu+'.nvbuffer1.n print("OK", count)'        
-        gateDevice.set_output_on()
-        gateDevice.write(script)
-        readout = gateDevice.read()
-        status = readout[0:2]
-        if status == 'OK':
-            print("Script is done")
-        
-        readings = int(float(readout.split('\t')[1]))
-        print readings
-        #gateDevice.set_output_off()
-        igs = gateDevice.readBuffer('nvbuffer1', 1, readings)
-        ids = drainDevice.readBuffer('nvbuffer1', 1, readings)
-        self.__plotcontroller.plotIV(ids,vgs);
-        return vgs, igs, ids
+            
+        vgs, igs, ids = self.performSweep(gateDevice, drainDevice, gate_smu, drain_smu, start, stop, step)
+        boolFWBW = self.__ui.boolFWBW.isOn()
+        if boolFWBW:
+            vgs_back,igs_back,ids_back = self.performSweep(gateDevice, drainDevice, gate_smu, drain_smu, stop, start, step)
+            return vgs,igs,ids,vgs_back,igs_back,ids_back
+        else:
+            return vgs, igs, ids
 '''
 Created on Sep 5, 2013
 
@@ -246,6 +258,8 @@ class ComplianceController(object):
         self.__ui.vlim_k2_b.setText(ComplianceController.DEFAULT_V_LIMIT)
         
     def notifyDeviceAttached(self,device):
+        self.__ui.tftwidget.setEnabled(True)
+        self.__ui.bias.setEnabled(True)
         print('Device added')
         if self.__k1_address == None and device.getAddress() != self.__k2_address:
             self.__k1_address = device.getAddress()
@@ -257,6 +271,9 @@ class ComplianceController(object):
         self.enableComplianceControls(device.getAddress(), device.getChannel(),device.getNode(),True)
         
     def notifyDeviceRemoved(self,device):
+        if len(self.__deviceController.getAllDevices()) == 0:
+            self.__ui.tftwidget.setEnabled(False)
+            self.__ui.bias.setEnabled(True)
         print('Device removed')
         self.enableComplianceControls(device.getAddress(), device.getChannel(),device.getNode(),False)
         
@@ -291,7 +308,75 @@ class ComplianceController(object):
                 self.__ui.node_k2_b.setText(node)
                 self.__ui.box_k2_b.setEnabled(boolToggle)
 
+'''
+Created on Sep 6, 2013
+
+This class controls everything about the scripts.
+
+@author: Incalza Dario
+'''
+
+class ScriptController(object):
+
+    def __init__(self,scriptTable,devicecontroller,logger):
+        self.__table = scriptTable
+        self.__scriptList = []
+        self.__devicecontroller = devicecontroller
+        self.__logger = logger
+    def addScript(self,script):
+        if self.__scriptList.count(script) == 0:
+            self.__scriptList.append(script)
+            self.updateTableView()
+        else:
+            raise ValueError('This script was already added')
+        
+    def removeScript(self,script):
+        self.__scriptList.remove(script)
+        self.updateTableView()
     
+    def getScript(self,name):
+        for script in self.__scriptList:
+            if script.getName() == name:
+                return script
+        raise ValueError("Script with name %n was not found",name)
+    
+    def getAllScripts(self):
+        return list(self.__scriptList)
+    
+    def updateTableView(self):
+        rows = len(self.__scriptList)
+        self.__table.setRowCount(rows)
+        x=0
+        for script in self.__scriptList:
+            self.insertScriptRow(x,script)
+            x=x+1
+    def getSelectedScript(self):
+        selectionModel = self.__table.selectionModel()
+        
+        if selectionModel.hasSelection():
+            rows = selectionModel.selectedRows()
+            for idx in rows:
+                row = idx.row()
+                name = str(self.__table.item(row, 0).text())
+                return self.getScript(name)
+        else:
+            msg = "No script was selected"
+            QtGui.QMessageBox.information(None, "Load script..", msg, buttons=QtGui.QMessageBox.Ok, defaultButton=QtGui.QMessageBox.NoButton)
+            
+    def loadSelectedScripts(self):
+        script = self.getSelectedScript()
+        if script == None:
+            raise ValueError("Should not happen, script = Nonetype")
+        dialog = ScriptLoaderDialog(None,script,self.__devicecontroller,self.__logger)
+        dialog.exec_()
+        return
+            
+               
+    def insertScriptRow(self,x,script):
+        self.__table.setItem(x,0, QtGui.QTableWidgetItem(script.getName()))
+        self.__table.setItem(x,1, QtGui.QTableWidgetItem(script.getPath()))
+        self.__table.setItem(x,2, QtGui.QTableWidgetItem(script.getSize()+" Kb"))
+        
 class PlotController(object):
 
     def __init__(self,plotWidget):
@@ -299,22 +384,28 @@ class PlotController(object):
         
     def PlotFunc(self):
         self.clearPlot()
-        randomNumbers = random.sample(range(0, 10), 10)
-        self.__plotWidget.canvas.ax.set_title("I-V Curve")
-        self.__plotWidget.canvas.ax.set_xlabel("V")
-        self.__plotWidget.canvas.ax.set_ylabel("I")
-        self.__plotWidget.canvas.ax.plot(randomNumbers)
-        self.__plotWidget.canvas.draw()
+        self.plotIV([10,100,1000,-100000,100000000],[100,100,100,-100,100],[1,2,3,4,5])
     
     def clearPlot(self):
         self.__plotWidget.canvas.ax.cla()
     
-    def plotIV(self,I,V):
+    def plotIV(self,Id,Ig,V,Id_back=None,Ig_back=None,Vg_back = None):
         self.clearPlot()
+        Id = numpy.asarray(Id)
+        Ig = numpy.asarray(Ig)
+        V = numpy.asarray(V)
         self.__plotWidget.canvas.ax.set_title("I-V Curve")
-        self.__plotWidget.canvas.ax.set_xlabel("V")
-        self.__plotWidget.canvas.ax.set_ylabel("I")
-        self.__plotWidget.canvas.ax.plot(V,I)
+        self.__plotWidget.canvas.ax.set_xlabel("V_gate")
+        self.__plotWidget.canvas.ax.set_ylabel("I (log scale)")
+        self.__plotWidget.canvas.ax.set_yscale('log')
+        self.__plotWidget.canvas.ax.plot(V,numpy.absolute(Id),'g',label='I_ds')
+        self.__plotWidget.canvas.ax.plot(V,numpy.absolute(Ig),'r--',label='I_gs')
+        if Id_back != None:
+            Id_back = numpy.asarray(Id_back)
+            Ig_back = numpy.asarray(Ig_back)
+            self.__plotWidget.canvas.ax.plot(V,numpy.absolute(Id_back),'b',label='I_ds_back')
+            self.__plotWidget.canvas.ax.plot(V,numpy.absolute(Ig_back),'r--',label='I_gs_back')
+        legend = self.__plotWidget.canvas.ax.legend(loc='upper center', shadow=True)
         self.__plotWidget.canvas.draw()
 
         
