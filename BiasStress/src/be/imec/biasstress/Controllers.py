@@ -4,8 +4,9 @@ from PyQt4 import QtCore
 from PyQt4 import QtGui
 from be.imec.biasstress.util.Toolbox import isANumber
 from be.imec.biasstress.ScriptLoaderDialog import ScriptLoaderDialog
-import numpy
-from matplotlib.pyplot import legend,gca
+import numpy,os,sqlite3
+from be.imec.biasstress.Settings import TFTCharacteristic
+
 
 '''
 Created on Sep 5, 2013
@@ -33,7 +34,7 @@ class TFTController(AbstractController):
         self.DEFAULT_VDS= defaultnodevalues[3]
         self.DEFAULT_STEP = defaultnodevalues[2]
         self.__ui=ui
-        self.__ui.tftwidget.setEnabled(False)
+        #self.__ui.tftwidget.setEnabled(False)
         self.__currentTft = TFT(defaultnodevalues)
         self.__logger=logger
         self.__plotcontroller=plotcontroller
@@ -41,26 +42,31 @@ class TFTController(AbstractController):
         self.__characteristics = characteristics
         self.loadCharacteristics()
     
+    def addCharacteristics(self,chars):
+        self.__characteristics = chars+self.__characteristics
+        self.loadCharacteristics()
+    
     def loadCharacteristics(self):
+        self.__ui.oxideCombo.clear()
         availableoxides = []
         if len(self.__characteristics)==0:
             raise ValueError('No default TFT characteristics are specified in the settings.xml. Please do so.')
             return
         for k in self.__characteristics:
-                availableoxides.append(QtCore.QString(k.getName()))
+                availableoxides.append(QtCore.QString(k.getName()+" - "+k.getConfigName()))
+
         self.__ui.oxideCombo.currentIndexChanged['QString'].connect(self.oxideChoiceChanged)
         self.__ui.oxideCombo.addItems(availableoxides)
         
     
     def oxideChoiceChanged(self):
         name = str(self.__ui.oxideCombo.currentText())
+        if name.strip() == "":
+            return
         for oxide in self.__characteristics:
-            if name == oxide.getName():
+            if name == oxide.getName()+" - "+oxide.getConfigName():
                 choice = oxide
                 break
-        if choice == None:
-            raise ValueError("Something went wrong what did not supposed to go wrong.")
-            return
         
         self.__ui.tft_eps_r.setText(QtCore.QString(choice.getEps_r()))
         self.__ui.tft_t_ox.setText(QtCore.QString(choice.getTox()))
@@ -446,4 +452,66 @@ class PlotController(object):
         legend = self.__plotWidget.canvas.ax.legend(loc='upper center', shadow=True)
         self.__plotWidget.canvas.draw()
 
+class DatabaseController(object):
+        
+    def __init__(self,ui,logger,tftController):
+        self.__ui = ui
+        self.__logger = logger
+        self.__currentdbpath = None
+        self.__currentConnection = None
+        self.__tftController = tftController
+        self.__ui.actionSaveTFTConfig.setEnabled(False)
+    
+    def chooseDatabaseFile(self):
+        choice = str(QtGui.QFileDialog.getOpenFileName(None, 'Load working database...',"BiasStress database",'*.sqlite'))
+        if choice.strip() != "" :
+            self.__currentdbpath = str(choice)
+            self.__currentConnection = sqlite3.connect(self.__currentdbpath)
+            self.__currentConnection.close()
+            self.updateUiStatus()
+        else:
+            return
+        
+        
+    def createNewDbFile(self):
+        choice = str(QtGui.QFileDialog.getSaveFileName(None, "Save database..",'biasdatabase','*.sqlite'))
+        if choice.strip() == "":
+            return
+        self.__currentdbpath = str(choice)
+        self.__currentConnection = sqlite3.connect(self.__currentdbpath)
+        self.__currentConnection.execute("create table TFT_CONFIG (id integer primary key,config_name varchar unique, oxide varchar , eps_r varchar, t_ox varchar, w_value varchar, l_value varchar, UNIQUE(config_name, oxide) ON CONFLICT IGNORE)")
+        self.__currentConnection.commit()
+        self.__currentConnection.close()
+        self.updateUiStatus()
+            
+    def updateUiStatus(self):
+        self.__ui.database_status_text.setText("Current database : "+os.path.basename(str(self.__currentdbpath)))
+        self.__logger.log(Logger.INFO,"Loaded working database "+ os.path.basename(str(self.__currentdbpath)))
+        self.__ui.actionSaveTFTConfig.setEnabled(True)
+        self.__tftController.addCharacteristics(self.getAllTftConfigurations())
+    
+    def saveTftConfiguration(self):
+        name,oldconfig = str(self.__ui.oxideCombo.currentText()).split(" - ")
+        configname = str(self.__ui.tftConfigname.text())
+        eps_r = str(self.__ui.tft_eps_r.text())
+        t_ox = str(self.__ui.tft_t_ox.text())
+        w_value = str(self.__ui.tft_w.text())
+        self.__currentConnection = sqlite3.connect(self.__currentdbpath)
+        l_value = str(self.__ui.tft_l.text())
+        self.__currentConnection.execute('INSERT INTO TFT_CONFIG (config_name, oxide, eps_r, t_ox, w_value, l_value) VALUES (?, ?, ?, ?, ?, ?)', [configname, name, eps_r,t_ox,w_value,l_value]);
+        self.__currentConnection.commit()
+        self.__logger.log(Logger.INFO,"TFT Configuration saved to database "+os.path.basename(str(self.__currentdbpath)))
+        self.__currentConnection.close()
+        self.updateUiStatus()
+    
+    def getAllTftConfigurations(self):
+        tftConfigs = []
+        if self.__currentdbpath != None or self.__currentdbpath.strip() != "":   
+            self.__currentConnection = sqlite3.connect(self.__currentdbpath)
+            cursor = self.__currentConnection.execute("SELECT config_name, oxide, eps_r, t_ox, w_value, l_value  from TFT_CONFIG")
+            for row in cursor:
+                tftConfigs.append(TFTCharacteristic(row[0],row[1],row[2],row[3],row[4],row[5]))
+            self.__currentConnection.close()
+            return tftConfigs
+        return tftConfigs
         

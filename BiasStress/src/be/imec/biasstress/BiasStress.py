@@ -11,7 +11,7 @@ from util.Logger import Logger
 from DeviceDialog import DeviceDialog
 import os
 from models.Script import Script
-from Controllers import TFTController,DeviceController,ComplianceController,PlotController,ScriptController
+from Controllers import TFTController,DeviceController,ComplianceController,PlotController,ScriptController,DatabaseController
 from Settings import SettingsParser
 import sys
 class BiasStress(QtGui.QMainWindow):
@@ -37,6 +37,7 @@ class BiasStress(QtGui.QMainWindow):
             self.__scriptController = ScriptController(self.ui.scriptTable,self.__deviceController,self.__logger)
             self.__plotController = PlotController(self.ui.plotWidget)
             self.__tftController = TFTController(self.__deviceController,self.ui,self.__logger,self.__plotController,self.__settingsParser.getTFTCharacteristics(),self.__settingsParser.getDefaultTFTNodeValues())
+            self.__dbController = DatabaseController(self.ui,self.__logger,self.__tftController)
             self.initialize_gui()
         except IOError:
             QtGui.QMessageBox.warning(None, QtCore.QString('Error settings'), 'The settings file is either missing or has the wrong syntax. Please ensure there is a file "settings.xml" present in the root directory of this application. Aborting.')
@@ -67,6 +68,11 @@ class BiasStress(QtGui.QMainWindow):
         self.ui.openScript.clicked.connect(self.openScript)
         self.ui.runTFT.clicked.connect(self.__tftController.tftRun)
         self.ui.loadScriptToDevice.clicked.connect(self.__scriptController.loadSelectedScripts)
+        
+        ##db actions
+        self.ui.actionOpenDatabase.clicked.connect(self.__dbController.chooseDatabaseFile)
+        self.ui.actionNewDb.clicked.connect(self.__dbController.createNewDbFile)
+        self.ui.actionSaveTFTConfig.clicked.connect(self.__dbController.saveTftConfiguration)
     
     def showAddDeviceDialog(self):
         dialog = DeviceDialog(self,self.__deviceController,self.__logger)
@@ -111,7 +117,9 @@ class BiasStress(QtGui.QMainWindow):
             QtGui.QMessageBox.information(self, "Remove devices", msg, buttons=QtGui.QMessageBox.Ok, defaultButton=QtGui.QMessageBox.NoButton)
 
     def openScript(self):
-        path = QtGui.QFileDialog.getOpenFileName(self, 'Load Script...', '/home','*.txt')
+        path = str(QtGui.QFileDialog.getOpenFileName(self, 'Load Script...', '/home','*.txt'))
+        if path.strip() =="":
+            return
         fname = os.path.basename(str(path))
         size = os.path.getsize(path)*0.001
         script = Script(fname,path,size)

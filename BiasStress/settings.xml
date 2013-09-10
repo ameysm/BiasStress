@@ -2,7 +2,7 @@
 <settings>
 	<TFT_characteristics>
 	<!-- _WARNING_ characteristic name should be unique. If you want to use variants you should do the following ie. SiN and SiN_2 -->
-		<characteristic name="SiN" eps_r="8.5" t_ox="50" W="60" L="20"/>
+		<characteristic configname = "default" name="SiN" eps_r="8.5" t_ox="50" W="60" L="20"/>
 	</TFT_characteristics>
 	<constants>
 		<constant name="compliance_current" value="0.1"/>

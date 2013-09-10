@@ -20,7 +20,7 @@ class SettingsParser(object):
         characteristiclist = self.__xmldoc.getElementsByTagName('characteristic')
         self.__characteristics = [] 
         for c in characteristiclist :
-            characteristic = TFTCharacteristic(c.attributes['name'].value,c.attributes['eps_r'].value,c.attributes['t_ox'].value,c.attributes['W'].value,c.attributes['L'].value)
+            characteristic = TFTCharacteristic(c.attributes['configname'].value,c.attributes['name'].value,c.attributes['eps_r'].value,c.attributes['t_ox'].value,c.attributes['W'].value,c.attributes['L'].value)
             self.__characteristics.append(characteristic)
         
     def parseConstants(self):
@@ -52,13 +52,16 @@ This class represents all characteristics for one possible TFT composition.
 '''
 class TFTCharacteristic(object):
     
-    def __init__(self,name,eps_r,t_ox,W,L):
+    def __init__(self,configname,name,eps_r,t_ox,W,L):
         self.__name = name
         self.__eps_r = eps_r
         self.__tox = t_ox
         self.__W = W
         self.__L = L
-    
+        self.__config_name = configname
+        
+    def getConfigName(self):
+        return self.__config_name
     def getName(self):
         return self.__name
     
@@ -88,5 +91,21 @@ class TFTCharacteristic(object):
             raise ValueError('L cannot be 0 or less')
         else:
             self.__L = L
-                
+            
+    '''
+    Necessary to override __eq__ and __ne__ in order for the lookup in lists etc to succeed on the constraints
+    we would like to choose when two Script instances refer to the same instance.
+    '''
+    def __eq__(self, other):
+        if isinstance(other, TFTCharacteristic):
+            return self.getName() == other.getName() and self.getConfigName() == other.getConfigName()
+        
+        return NotImplemented
+
+    def __ne__(self, other):
+        result = self.__eq__(other)
+        if result is NotImplemented:
+            return result
+        return not result
+        
     
