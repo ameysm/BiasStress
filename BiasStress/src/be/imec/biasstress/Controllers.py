@@ -34,12 +34,39 @@ class TFTController(AbstractController):
         self.DEFAULT_STEP = defaultnodevalues[2]
         self.__ui=ui
         self.__ui.tftwidget.setEnabled(False)
-        self.__currentTft = TFT()
+        self.__currentTft = TFT(defaultnodevalues)
         self.__logger=logger
         self.__plotcontroller=plotcontroller
         self.setTFTValues()
         self.__characteristics = characteristics
-       
+        self.loadCharacteristics()
+    
+    def loadCharacteristics(self):
+        availableoxides = []
+        if len(self.__characteristics)==0:
+            raise ValueError('No default TFT characteristics are specified in the settings.xml. Please do so.')
+            return
+        for k in self.__characteristics:
+                availableoxides.append(QtCore.QString(k.getName()))
+        self.__ui.oxideCombo.currentIndexChanged['QString'].connect(self.oxideChoiceChanged)
+        self.__ui.oxideCombo.addItems(availableoxides)
+        
+    
+    def oxideChoiceChanged(self):
+        name = str(self.__ui.oxideCombo.currentText())
+        for oxide in self.__characteristics:
+            if name == oxide.getName():
+                choice = oxide
+                break
+        if choice == None:
+            raise ValueError("Something went wrong what did not supposed to go wrong.")
+            return
+        
+        self.__ui.tft_eps_r.setText(QtCore.QString(choice.getEps_r()))
+        self.__ui.tft_t_ox.setText(QtCore.QString(choice.getTox()))
+        self.__ui.tft_w.setText(QtCore.QString(choice.getW()))
+        self.__ui.tft_l.setText(QtCore.QString(choice.getL()))
+        
     
     def resetTFTValues(self):
         self.__ui.vgstart.setText(self.DEFAULT_VGS_START)

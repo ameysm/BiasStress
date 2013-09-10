@@ -36,7 +36,7 @@ class BiasStress(QtGui.QMainWindow):
             self.__deviceController.addDeviceListener(self.__complianceController)
             self.__scriptController = ScriptController(self.ui.scriptTable,self.__deviceController,self.__logger)
             self.__plotController = PlotController(self.ui.plotWidget)
-            self.__tftController = TFTController(self.__deviceController,self.ui,self.__logger,self.__plotController,self.__settingsParser.getTFTCharacteristics())
+            self.__tftController = TFTController(self.__deviceController,self.ui,self.__logger,self.__plotController,self.__settingsParser.getTFTCharacteristics(),self.__settingsParser.getDefaultTFTNodeValues())
             self.initialize_gui()
         except IOError:
             QtGui.QMessageBox.warning(None, QtCore.QString('Error settings'), 'The settings file is either missing or has the wrong syntax. Please ensure there is a file "settings.xml" present in the root directory of this application. Aborting.')

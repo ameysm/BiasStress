@@ -4,7 +4,9 @@ Created on Sep 10, 2013
 @author: Incalza Dario
 '''
 from xml.dom import minidom
-
+'''
+This class is responsible for parsing the settings.xml file. 
+'''
 class SettingsParser(object):
     
     def __init__(self):
@@ -45,10 +47,9 @@ class SettingsParser(object):
         
         return node_values
 
-
-
-            
-
+'''
+This class represents all characteristics for one possible TFT composition.
+'''
 class TFTCharacteristic(object):
     
     def __init__(self,name,eps_r,t_ox,W,L):
