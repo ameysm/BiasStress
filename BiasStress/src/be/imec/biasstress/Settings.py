@@ -8,7 +8,7 @@ from xml.dom import minidom
 class SettingsParser(object):
     
     def __init__(self):
-        self.__xmldoc = minidom.parse('../../../settings.xml')
+        self.__xmldoc = minidom.parse('../../../../settings.xml')
     
     def parse(self):
         self.parseTftCharacteristics()
@@ -20,14 +20,33 @@ class SettingsParser(object):
         for c in characteristiclist :
             characteristic = TFTCharacteristic(c.attributes['name'].value,c.attributes['eps_r'].value,c.attributes['t_ox'].value,c.attributes['W'].value,c.attributes['L'].value)
             self.__characteristics.append(characteristic)
-        print self.__characteristics
         
     def parseConstants(self):
         self.__constants = dict()
-        constantList = self.__xmldoc.getElementById('constant')
+        constantList = self.__xmldoc.getElementsByTagName('constant')
         for c in constantList:
             self.__constants[c.attributes['name'].value] =c.attributes['value'].value 
-        print self.__constants
+            
+    def getConstants(self):
+        return self.__constants
+    
+    def getTFTCharacteristics(self):
+        return self.__characteristics
+    
+    def getConstantValue(self,name):
+        return self.getConstants()[name]
+    
+    def getDefaultTFTNodeValues(self):
+        node_values = []
+        node_values.append(self.getConstantValue('vg_start'))
+        node_values.append(self.getConstantValue('vg_end'))
+        node_values.append(self.getConstantValue('step'))
+        node_values.append(self.getConstantValue('vds'))
+        
+        return node_values
+
+
+
             
 
 class TFTCharacteristic(object):

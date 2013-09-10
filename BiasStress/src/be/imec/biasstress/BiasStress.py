@@ -27,19 +27,19 @@ class BiasStress(QtGui.QMainWindow):
         self.ui = Ui_MainWindow()    #note: instance, not the class
         self.ui.setupUi(self)
         self.__logger = Logger(self.ui.logConsole)
-        '''
+        
         try:
             self.__settingsParser = SettingsParser()
             self.__settingsParser.parse()
             self.__deviceController = DeviceController(self.ui.deviceTable)
-            self.__complianceController = ComplianceController(self.ui,self.__deviceController,self.__logger);
+            self.__complianceController = ComplianceController(self.ui,self.__deviceController,self.__logger,self.__settingsParser.getConstantValue('compliance_current'),self.__settingsParser.getConstantValue('compliance_voltage'));
             self.__deviceController.addDeviceListener(self.__complianceController)
             self.__scriptController = ScriptController(self.ui.scriptTable,self.__deviceController,self.__logger)
             self.__plotController = PlotController(self.ui.plotWidget)
-            self.__tftController = TFTController(self.__deviceController,self.ui,self.__logger,self.__plotController)
+            self.__tftController = TFTController(self.__deviceController,self.ui,self.__logger,self.__plotController,self.__settingsParser.getTFTCharacteristics())
             self.initialize_gui()
         except IOError:
-            QtGui.QMessageBox.warning(None, QtCore.QString('Error settings'), 'The settings file is either missing or has the wrong syntax. Aborting.')
+            QtGui.QMessageBox.warning(None, QtCore.QString('Error settings'), 'The settings file is either missing or has the wrong syntax. Please ensure there is a file "settings.xml" present in the root directory of this application. Aborting.')
             sys.exit()
         '''
         self.__deviceController = DeviceController(self.ui.deviceTable)
@@ -49,7 +49,7 @@ class BiasStress(QtGui.QMainWindow):
         self.__plotController = PlotController(self.ui.plotWidget)
         self.__tftController = TFTController(self.__deviceController,self.ui,self.__logger,self.__plotController)
         self.initialize_gui()
-        
+        '''
     
     def initialize_gui(self):
         self.register_gui_functions()

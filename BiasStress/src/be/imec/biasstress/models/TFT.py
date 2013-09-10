@@ -17,7 +17,9 @@ class TFT(object):
     DEFAULT_STEP='2e-1'
     
     
-    def __init__(self):
+    def __init__(self,defaultvalues):
+        
+        
         self.__vgStart = TFT.DEFAULT_VGS_START
         self.__vgEnd =TFT.DEFAULT_VGS_END
         self.__vds = TFT.DEFAULT_VDS

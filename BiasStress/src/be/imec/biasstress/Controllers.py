@@ -26,20 +26,26 @@ class AbstractController(object):
 
 class TFTController(AbstractController):
     
-    def __init__(self,devicecontroller,ui,logger,plotcontroller):
+    def __init__(self,devicecontroller,ui,logger,plotcontroller,characteristics,defaultnodevalues):
         AbstractController.__init__(self, devicecontroller)
+        self.DEFAULT_VGS_START = defaultnodevalues[0]
+        self.DEFAULT_VGS_END= defaultnodevalues[1]
+        self.DEFAULT_VDS= defaultnodevalues[3]
+        self.DEFAULT_STEP = defaultnodevalues[2]
         self.__ui=ui
         self.__ui.tftwidget.setEnabled(False)
         self.__currentTft = TFT()
         self.__logger=logger
         self.__plotcontroller=plotcontroller
         self.setTFTValues()
+        self.__characteristics = characteristics
+       
     
     def resetTFTValues(self):
-        self.__ui.vgstart.setText(TFT.DEFAULT_VGS_START)
-        self.__ui.vgend.setText(TFT.DEFAULT_VGS_END)
-        self.__ui.vds.setText(TFT.DEFAULT_VDS)
-        self.__ui.step.setText(TFT.DEFAULT_STEP)
+        self.__ui.vgstart.setText(self.DEFAULT_VGS_START)
+        self.__ui.vgend.setText(self.DEFAULT_VGS_END)
+        self.__ui.vds.setText(self.DEFAULT_VDS)
+        self.__ui.step.setText(self.DEFAULT_STEP)
         self.__logger.log(Logger.INFO,'TFT Values reset')
 
     
@@ -64,12 +70,12 @@ class TFTController(AbstractController):
         readout = gateDevice.read()
         status = readout[0:2]
         if status == 'OK':
-            print "Script is done"
+            self.__logger.log(Logger.INFO,"The TFT script is done running on the SMU, data will now be extracted and plotted")
         readings = int(float(readout.split('\t')[1]))
         print readings
         igs = gateDevice.readBuffer('nvbuffer1', 1, readings)
         ids = drainDevice.readBuffer('nvbuffer1', 1, readings)
-        self.__plotcontroller.plotIV(ids, igs, vgs)
+        
         gateDevice.set_output_off()
         return vgs, igs, ids
 
@@ -101,9 +107,14 @@ class TFTController(AbstractController):
         boolFWBW = self.__ui.boolFWBW.isOn()
         if boolFWBW:
             vgs_back,igs_back,ids_back = self.performSweep(gateDevice, drainDevice, gate_smu, drain_smu, stop, start, step)
+            self.__plotcontroller.plotIV(ids, igs, vgs,ids_back,igs_back,vgs_back)
+            self.__logger.log(Logger.INFO,"Data for forward and backward sweep is plotted")
             return vgs,igs,ids,vgs_back,igs_back,ids_back
         else:
+            self.__plotcontroller.plotIV(ids, igs, vgs)
+            self.__logger.log(Logger.INFO,"Data for forward sweep is plotted")
             return vgs, igs, ids
+        
 '''
 Created on Sep 5, 2013
 
@@ -191,13 +202,13 @@ class DeviceController(AbstractController):
         self.updateTableView()
 
 class ComplianceController(object):
-    DEFAULT_I_LIMIT = '0.1'
-    DEFAULT_V_LIMIT = '30'
 
-    def __init__(self,ui,devicecontroller,logger):
+    def __init__(self,ui,devicecontroller,logger,default_i, default_v):
         self.__ui = ui
         self.__deviceController = devicecontroller
         self.__logger = logger
+        self.DEFAULT_I_LIMIT = default_i
+        self.DEFAULT_V_LIMIT = default_v
         self.disableComplianceControls('all')
         self.__k1_address = None
         self.__k2_address = None
@@ -247,15 +258,15 @@ class ComplianceController(object):
                 self.__logger.log(Logger.WARNING,"Compliance levels for current and voltage on device "+device.getName()+" are set, respectively, :"+str(ilim)+' A and '+(vlim)+'V'+' for channel '+device.getChannel())              
     
     def resetDefaults(self):
-        self.__ui.ilim_k1_a.setText(ComplianceController.DEFAULT_I_LIMIT)
-        self.__ui.ilim_k1_b.setText(ComplianceController.DEFAULT_I_LIMIT)
-        self.__ui.ilim_k2_a.setText(ComplianceController.DEFAULT_I_LIMIT)
-        self.__ui.ilim_k2_b.setText(ComplianceController.DEFAULT_I_LIMIT)
+        self.__ui.ilim_k1_a.setText(self.DEFAULT_I_LIMIT)
+        self.__ui.ilim_k1_b.setText(self.DEFAULT_I_LIMIT)
+        self.__ui.ilim_k2_a.setText(self.DEFAULT_I_LIMIT)
+        self.__ui.ilim_k2_b.setText(self.DEFAULT_I_LIMIT)
         
-        self.__ui.vlim_k1_a.setText(ComplianceController.DEFAULT_V_LIMIT)
-        self.__ui.vlim_k1_b.setText(ComplianceController.DEFAULT_V_LIMIT)
-        self.__ui.vlim_k2_a.setText(ComplianceController.DEFAULT_V_LIMIT)
-        self.__ui.vlim_k2_b.setText(ComplianceController.DEFAULT_V_LIMIT)
+        self.__ui.vlim_k1_a.setText(self.DEFAULT_V_LIMIT)
+        self.__ui.vlim_k1_b.setText(self.DEFAULT_V_LIMIT)
+        self.__ui.vlim_k2_a.setText(self.DEFAULT_V_LIMIT)
+        self.__ui.vlim_k2_b.setText(self.DEFAULT_V_LIMIT)
         
     def notifyDeviceAttached(self,device):
         self.__ui.tftwidget.setEnabled(True)
