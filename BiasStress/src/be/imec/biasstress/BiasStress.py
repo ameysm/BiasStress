@@ -75,8 +75,10 @@ class BiasStress(QtGui.QMainWindow):
         self.ui.actionSaveTFTConfig.clicked.connect(self.__dbController.saveTftConfiguration)
     
     def showAddDeviceDialog(self):
+        '''
         dialog = DeviceDialog(self,self.__deviceController,self.__logger)
-        dialog.exec_()
+        dialog.exec_()'''
+        self.__plotController.PlotFunc()
 
     def toggleAdvanceScripting(self):
         if self.ui.boolAdvancedScripting.checkState() == QtCore.Qt.Checked:

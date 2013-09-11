@@ -1,10 +1,10 @@
 from be.imec.biasstress.models.TFT import TFT
 from be.imec.biasstress.util.Logger import Logger
-from PyQt4 import QtCore
-from PyQt4 import QtGui
+from PyQt4 import QtCore,QtGui
 from be.imec.biasstress.util.Toolbox import isANumber
 from be.imec.biasstress.ScriptLoaderDialog import ScriptLoaderDialog
 import numpy,os,sqlite3
+from threading import Thread
 from be.imec.biasstress.Settings import TFTCharacteristic
 
 
@@ -140,12 +140,16 @@ class TFTController(AbstractController):
         boolFWBW = self.__ui.boolFWBW.isOn()
         if boolFWBW:
             vgs_back,igs_back,ids_back = self.performSweep(gateDevice, drainDevice, gate_smu, drain_smu, stop, start, step)
-            self.__plotcontroller.plotIV(ids, igs, vgs,ids_back,igs_back,vgs_back)
-            self.__logger.log(Logger.INFO,"Data for forward and backward sweep is plotted")
+            t = Thread(target=self.__plotcontroller.plotIV,args=(ids, igs, vgs,ids_back,igs_back,vgs_back,))
+            #self.__plotcontroller.plotIV(ids, igs, vgs,ids_back,igs_back,vgs_back)
+            t.start()
+            self.__logger.log(Logger.INFO,"Data for forward and backward sweep is being plotted")
             return vgs,igs,ids,vgs_back,igs_back,ids_back
         else:
-            self.__plotcontroller.plotIV(ids, igs, vgs)
-            self.__logger.log(Logger.INFO,"Data for forward sweep is plotted")
+            t = Thread(target=self.__plotcontroller.plotIV,args=(ids, igs, vgs,))
+            t.start()
+            #self.__plotcontroller.plotIV(ids, igs, vgs)
+            self.__logger.log(Logger.INFO,"Data for forward sweep is being plotted")
             return vgs, igs, ids
         
 '''
@@ -428,7 +432,8 @@ class PlotController(object):
         
     def PlotFunc(self):
         self.clearPlot()
-        self.plotIV([10,100,1000,-100000,100000000],[100,100,100,-100,100],[1,2,3,4,5])
+        t = Thread(target=self.plotIV,args=([10,100,1000,-100000,100000000],[100,100,100,-100,100],[1,2,3,4,5],))
+        t.start()
     
     def clearPlot(self):
         self.__plotWidget.canvas.ax.cla()
@@ -488,11 +493,16 @@ class DatabaseController(object):
         self.__ui.database_status_text.setText("Current database : "+os.path.basename(str(self.__currentdbpath)))
         self.__logger.log(Logger.INFO,"Loaded working database "+ os.path.basename(str(self.__currentdbpath)))
         self.__ui.actionSaveTFTConfig.setEnabled(True)
-        self.__tftController.addCharacteristics(self.getAllTftConfigurations())
     
+    def notifyTFTController(self):
+        self.__tftController.addCharacteristics(self.getAllTftConfigurations())
+        
     def saveTftConfiguration(self):
         name,oldconfig = str(self.__ui.oxideCombo.currentText()).split(" - ")
         configname = str(self.__ui.tftConfigname.text())
+        if configname.strip()=="":
+            QtGui.QMessageBox.warning(None, QtCore.QString('Error config name...'), 'A unique configname is mandatory, please adjust.')
+            return
         eps_r = str(self.__ui.tft_eps_r.text())
         t_ox = str(self.__ui.tft_t_ox.text())
         w_value = str(self.__ui.tft_w.text())
@@ -502,7 +512,7 @@ class DatabaseController(object):
         self.__currentConnection.commit()
         self.__logger.log(Logger.INFO,"TFT Configuration saved to database "+os.path.basename(str(self.__currentdbpath)))
         self.__currentConnection.close()
-        self.updateUiStatus()
+        self.notifyTFTController()
     
     def getAllTftConfigurations(self):
         tftConfigs = []
