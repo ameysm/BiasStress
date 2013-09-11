@@ -11,17 +11,12 @@ from util.Logger import Logger
 from DeviceDialog import DeviceDialog
 import os
 from models.Script import Script
-from Controllers import TFTController,DeviceController,ComplianceController,PlotController,ScriptController,DatabaseController
+from Controllers import TFTController,DeviceController,ComplianceController,PlotController,ScriptController,DatabaseController,BiasController
 from Settings import SettingsParser
 import sys
 class BiasStress(QtGui.QMainWindow):
-    '''
-    classdocs
-    '''
+   
     def __init__(self,parent=None):
-        '''
-        Constructor
-        '''
         QtGui.QWidget.__init__(self, parent)
         
         self.ui = Ui_MainWindow()    #note: instance, not the class
@@ -38,23 +33,16 @@ class BiasStress(QtGui.QMainWindow):
             self.__plotController = PlotController(self.ui.plotWidget)
             self.__tftController = TFTController(self.__deviceController,self.ui,self.__logger,self.__plotController,self.__settingsParser.getTFTCharacteristics(),self.__settingsParser.getDefaultTFTNodeValues())
             self.__dbController = DatabaseController(self.ui,self.__logger,self.__tftController)
+            self.__biasController = BiasController(self.ui,self.__logger)
             self.initialize_gui()
         except IOError:
             QtGui.QMessageBox.warning(None, QtCore.QString('Error settings'), 'The settings file is either missing or has the wrong syntax. Please ensure there is a file "settings.xml" present in the root directory of this application. Aborting.')
             sys.exit()
-        '''
-        self.__deviceController = DeviceController(self.ui.deviceTable)
-        self.__complianceController = ComplianceController(self.ui,self.__deviceController,self.__logger);
-        self.__deviceController.addDeviceListener(self.__complianceController)
-        self.__scriptController = ScriptController(self.ui.scriptTable,self.__deviceController,self.__logger)
-        self.__plotController = PlotController(self.ui.plotWidget)
-        self.__tftController = TFTController(self.__deviceController,self.ui,self.__logger,self.__plotController)
-        self.initialize_gui()
-        '''
-    
+     
     def initialize_gui(self):
         self.register_gui_functions()
-        self.ui.bias.setEnabled(False)
+        #self.ui.bias.setEnabled(False)
+        self.ui.tftwidget.setEnabled(False)
         self.__logger.log(Logger.INFO,"###### Welcome to BiasStress ######")
         
     def register_gui_functions(self):
@@ -75,11 +63,10 @@ class BiasStress(QtGui.QMainWindow):
         self.ui.actionSaveTFTConfig.clicked.connect(self.__dbController.saveTftConfiguration)
     
     def showAddDeviceDialog(self):
-        '''
+       
         dialog = DeviceDialog(self,self.__deviceController,self.__logger)
-        dialog.exec_()'''
-        self.__plotController.PlotFunc()
-
+        dialog.exec_()
+        
     def toggleAdvanceScripting(self):
         if self.ui.boolAdvancedScripting.checkState() == QtCore.Qt.Checked:
             accept_msg = "Are you sure you want to enter advanced scripting mode ?"

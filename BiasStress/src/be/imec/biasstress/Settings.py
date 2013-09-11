@@ -94,7 +94,7 @@ class TFTCharacteristic(object):
             
     '''
     Necessary to override __eq__ and __ne__ in order for the lookup in lists etc to succeed on the constraints
-    we would like to choose when two Script instances refer to the same instance.
+    we would like to choose when two TFTCharacteristic instances refer to the same instance.
     '''
     def __eq__(self, other):
         if isinstance(other, TFTCharacteristic):

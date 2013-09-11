@@ -6,6 +6,7 @@ from be.imec.biasstress.ScriptLoaderDialog import ScriptLoaderDialog
 import numpy,os,sqlite3
 from threading import Thread
 from be.imec.biasstress.Settings import TFTCharacteristic
+from util import Toolbox
 
 
 '''
@@ -24,7 +25,10 @@ class AbstractController(object):
     
     def getDeviceController(self):
         return self.__visa
-
+'''
+This class represents a TFT Controller. This controller is capable of controlling every aspect of the TFT tabwidget, as well as performing the data measurement.
+Every db operation is routed through a dbController and every plot operation is routed through the plotController
+'''
 class TFTController(AbstractController):
     
     def __init__(self,devicecontroller,ui,logger,plotcontroller,characteristics,defaultnodevalues):
@@ -89,16 +93,21 @@ class TFTController(AbstractController):
         self.__ui.step.setText(self.__currentTft.getStep())
     
 
-    def performSweep(self, gateDevice, drainDevice, gate_smu, drain_smu, start, stop, step):
-        self.__logger.log(Logger.INFO, "Performing a TFT sweep from start gate voltage : %s and end gate voltage %e with step size %k", str(start), str(stop), str(step))
+    def performSweep(self, gateDevice, drainDevice, gate_smu, drain_smu, start, stop, step,boolBackwards):
+        self.__logger.log(Logger.INFO, "Performing a TFT sweep from start gate voltage :"+str(start)+" and end gate voltage "+str(stop)+" with step size "+str(step))
         punten = int(abs(stop - start) / step) + 1
         vgs = []
         for i in range(0, punten):
             gate = start + i * step
             vgs.append(gate)
-        
-        script = 'for x = 1, ' + str(punten) + ' do ' + gate_smu + '.source.levelv = ' + str(start) + ' + x * ' + str(step) + ' delay(0.05) ' + gate_smu + '.measure.i(' + gate_smu + '.nvbuffer1)  ' + drain_smu + '.measure.i(' + drain_smu + '.nvbuffer1) waitcomplete() end count=' + gate_smu + '.nvbuffer1.n print("OK", count)'
+            
+        drainDevice.set_output_volts(1)
+        drainDevice.set_output_on()
         gateDevice.set_output_on()
+        step_val = str(step)
+        if boolBackwards:
+            step_val = str(-step)
+        script = 'for x = 1, ' + str(punten) + ' do ' + gate_smu + '.source.levelv = ' + str(start) + ' + x * ' + step_val + ' delay(0.25) ' + gate_smu + '.measure.i(' + gate_smu + '.nvbuffer1)  ' + drain_smu + '.measure.i(' + drain_smu + '.nvbuffer1) waitcomplete() end count=' + gate_smu + '.nvbuffer1.n print("OK", count)'
         gateDevice.write(script)
         readout = gateDevice.read()
         status = readout[0:2]
@@ -110,12 +119,18 @@ class TFTController(AbstractController):
         ids = drainDevice.readBuffer('nvbuffer1', 1, readings)
         
         gateDevice.set_output_off()
+        drainDevice.set_output_off()
+
         return vgs, igs, ids
 
     def tftRun(self):
         self.__logger.log(Logger.INFO,"Performing a TFT sweep. The GUI will be unresponsive during the run.")
+        self.__plotcontroller.clearPlot()
         gateDevice = self.getDeviceController().getDeviceMappedToNode('Vg')
         drainDevice = self.getDeviceController().getDeviceMappedToNode('Vd')
+        sourceDevice = self.getDeviceController().getDeviceMappedToNode('Vs')
+        sourceDevice.set_output_volts(0)
+        sourceDevice.set_output_on()
         gateDevice.clear_buffer()
         drainDevice.clear_buffer()
         if gateDevice == None or drainDevice == None:
@@ -136,10 +151,11 @@ class TFTController(AbstractController):
         step = float(self.__ui.step.text());
         
             
-        vgs, igs, ids = self.performSweep(gateDevice, drainDevice, gate_smu, drain_smu, start, stop, step)
-        boolFWBW = self.__ui.boolFWBW.isOn()
+        vgs, igs, ids = self.performSweep(gateDevice, drainDevice, gate_smu, drain_smu, start, stop, step,False)
+        boolFWBW = self.__ui.boolFWBW.isChecked()
+        
         if boolFWBW:
-            vgs_back,igs_back,ids_back = self.performSweep(gateDevice, drainDevice, gate_smu, drain_smu, stop, start, step)
+            vgs_back,igs_back,ids_back = self.performSweep(gateDevice, drainDevice, gate_smu, drain_smu, stop, start, step,True)
             t = Thread(target=self.__plotcontroller.plotIV,args=(ids, igs, vgs,ids_back,igs_back,vgs_back,))
             #self.__plotcontroller.plotIV(ids, igs, vgs,ids_back,igs_back,vgs_back)
             t.start()
@@ -151,11 +167,77 @@ class TFTController(AbstractController):
             #self.__plotcontroller.plotIV(ids, igs, vgs)
             self.__logger.log(Logger.INFO,"Data for forward sweep is being plotted")
             return vgs, igs, ids
-        
 '''
-Created on Sep 5, 2013
+This class controls every aspect of managing the BIAS tabwidget and 
+'''  
+import time      
+class BiasController():
+    def __init__(self,ui,logger):
+        self.__ui = ui
+        self.__logger = logger
+        self.__ui.bias.setEnabled(True)
+        self.registerBiasFunctions()
+        self.totalpbar = self.__ui.totaltime_run
+        self.currentpbar = self.__ui.currentrun_progress
+        
 
-@author: Incalza Dario
+    
+    def registerBiasFunctions(self):
+        self.__ui.actionBiasRun.clicked.connect(self.biasRun)
+    
+    def biasRun(self):
+        self.nrDecades = int(self.__ui.samplesPerDecade.value())
+        self.totaltime = float(str(self.__ui.totalTime.text()))
+        self.__logger.log(Logger.INFO,"Decades "+str(self.nrDecades)+", total time "+str(self.totaltime))
+        self.startTotalLoop()
+        self.currentLoop()
+       
+
+    def startTotalLoop(self):
+        self.totalpbar.reset()
+        self.totalpbar.setMinimum(0)
+        self.totalpbar.setMaximum(self.totaltime)
+        crono = Crono()
+        crono.setTime(self.totaltime)
+        crono.tick.connect(self.totalpbar.setValue)
+        t1 = Thread(target=crono.checkStatus)
+        t1.start()
+    
+    def currentLoop(self):
+        result = Toolbox.makeTime(0, self.totaltime, self.nrDecades)
+        t_old = result.pop(0)
+        crono = Crono()
+        crono.tick.connect(self.currentpbar.setValue)
+        for t in result:
+            self.currentpbar.reset()
+            self.currentpbar.setMinimum(0)
+            self.currentpbar.setMaximum(t-t_old)
+            crono.setTime(t-t_old)
+            crono.checkStatus()
+            if self.totaltime == t:
+                break
+            t_old = t
+
+                 
+class Crono(QtCore.QThread):
+    
+    tick = QtCore.pyqtSignal(int, name="changed") 
+
+    def __init__(self, parent=None):
+        QtCore.QThread.__init__(self,parent)
+        
+    def setTime(self,time):
+        self.timeinter = int(time)
+        
+    def checkStatus(self):
+        for x in range(0,self.timeinter+1):
+            self.tick.emit(x)                     
+            time.sleep(1)          
+    
+        
+    
+'''
+This class controls every aspect of managing the devices to which this application connects with.
 '''
 
 class DeviceController(AbstractController):
@@ -237,7 +319,10 @@ class DeviceController(AbstractController):
                 logger.log(1,'Removed device on address '+device.getAddress()+ ' that was operating on channel '+device.getChannel()+" :: "+device.getName())
         
         self.updateTableView()
-
+        
+'''
+This class is responsible of controlling and drawing the compliance controls on the compliance tab.
+'''
 class ComplianceController(object):
 
     def __init__(self,ui,devicecontroller,logger,default_i, default_v):
@@ -357,7 +442,6 @@ class ComplianceController(object):
                 self.__ui.box_k2_b.setEnabled(boolToggle)
 
 '''
-Created on Sep 6, 2013
 
 This class controls everything about the scripts.
 
@@ -424,7 +508,9 @@ class ScriptController(object):
         self.__table.setItem(x,0, QtGui.QTableWidgetItem(script.getName()))
         self.__table.setItem(x,1, QtGui.QTableWidgetItem(script.getPath()))
         self.__table.setItem(x,2, QtGui.QTableWidgetItem(script.getSize()+" Kb"))
-        
+'''
+This class is capable of plotting data in the plotwidget
+'''        
 class PlotController(object):
 
     def __init__(self,plotWidget):
@@ -439,24 +525,26 @@ class PlotController(object):
         self.__plotWidget.canvas.ax.cla()
     
     def plotIV(self,Id,Ig,V,Id_back=None,Ig_back=None,Vg_back = None):
-        self.clearPlot()
-        Id = numpy.asarray(Id)
-        Ig = numpy.asarray(Ig)
-        V = numpy.asarray(V)
+        Id = [abs(float(x)) for x in Id]
+        Ig = [abs(float(x)) for x in Ig]
         self.__plotWidget.canvas.ax.set_title("I-V Curve")
         self.__plotWidget.canvas.ax.set_xlabel("V_gate")
         self.__plotWidget.canvas.ax.set_ylabel("I (log scale)")
         self.__plotWidget.canvas.ax.set_yscale('log')
-        self.__plotWidget.canvas.ax.plot(V,numpy.absolute(Id),'g',label='I_ds')
-        self.__plotWidget.canvas.ax.plot(V,numpy.absolute(Ig),'r--',label='I_gs')
+        self.__plotWidget.canvas.ax.plot(V,Id,'g',label='I_ds')
+        self.__plotWidget.canvas.ax.plot(V,Ig,'r--',label='I_gs')
         if Id_back != None:
-            Id_back = numpy.asarray(Id_back)
-            Ig_back = numpy.asarray(Ig_back)
-            self.__plotWidget.canvas.ax.plot(V,numpy.absolute(Id_back),'b',label='I_ds_back')
-            self.__plotWidget.canvas.ax.plot(V,numpy.absolute(Ig_back),'r--',label='I_gs_back')
-        legend = self.__plotWidget.canvas.ax.legend(loc='upper center', shadow=True)
+            Id_back = [abs(float(x)) for x in Id_back]
+            Ig_back = [abs(float(x)) for x in Ig_back]
+            self.__plotWidget.canvas.ax.plot(V,Id_back,'b',label='I_ds_back')
+            self.__plotWidget.canvas.ax.plot(V,Ig_back,'r--',label='I_gs_back')
+        legend = self.__plotWidget.canvas.ax.legend(loc='upper left', shadow=True)
         self.__plotWidget.canvas.draw()
-
+        
+'''
+This class acts as a layer to the connected database. Every database operation should be implemented here.
+On runtime every db operation should be routed through this controller.
+'''
 class DatabaseController(object):
         
     def __init__(self,ui,logger,tftController):
@@ -506,8 +594,11 @@ class DatabaseController(object):
         eps_r = str(self.__ui.tft_eps_r.text())
         t_ox = str(self.__ui.tft_t_ox.text())
         w_value = str(self.__ui.tft_w.text())
-        self.__currentConnection = sqlite3.connect(self.__currentdbpath)
         l_value = str(self.__ui.tft_l.text())
+        if isANumber(eps_r) or isANumber(t_ox) or isANumber(w_value) or isANumber(l_value):
+            QtGui.QMessageBox.warning(None, QtCore.QString('Error numerical values ...'), "One or more values (eps_r, t_ox, ...) are not valid numbers. Please correct these.")
+            return
+        self.__currentConnection = sqlite3.connect(self.__currentdbpath)
         self.__currentConnection.execute('INSERT INTO TFT_CONFIG (config_name, oxide, eps_r, t_ox, w_value, l_value) VALUES (?, ?, ?, ?, ?, ?)', [configname, name, eps_r,t_ox,w_value,l_value]);
         self.__currentConnection.commit()
         self.__logger.log(Logger.INFO,"TFT Configuration saved to database "+os.path.basename(str(self.__currentdbpath)))

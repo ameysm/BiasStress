@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'main_view.ui'
 #
-# Created: Tue Sep 10 14:33:09 2013
+# Created: Wed Sep 11 10:32:06 2013
 #      by: PyQt4 UI code generator 4.9.6
 #
 # WARNING! All changes made in this file will be lost!
@@ -438,10 +438,10 @@ class Ui_MainWindow(object):
         self.bias = QtGui.QWidget()
         self.bias.setObjectName(_fromUtf8("bias"))
         self.groupBox_5 = QtGui.QGroupBox(self.bias)
-        self.groupBox_5.setGeometry(QtCore.QRect(10, 10, 781, 231))
+        self.groupBox_5.setGeometry(QtCore.QRect(10, 10, 781, 211))
         self.groupBox_5.setObjectName(_fromUtf8("groupBox_5"))
         self.formLayoutWidget_2 = QtGui.QWidget(self.groupBox_5)
-        self.formLayoutWidget_2.setGeometry(QtCore.QRect(10, 20, 171, 181))
+        self.formLayoutWidget_2.setGeometry(QtCore.QRect(10, 20, 179, 101))
         self.formLayoutWidget_2.setObjectName(_fromUtf8("formLayoutWidget_2"))
         self.formLayout_2 = QtGui.QFormLayout(self.formLayoutWidget_2)
         self.formLayout_2.setMargin(0)
@@ -458,15 +458,33 @@ class Ui_MainWindow(object):
         self.totalTime = QtGui.QLineEdit(self.formLayoutWidget_2)
         self.totalTime.setObjectName(_fromUtf8("totalTime"))
         self.formLayout_2.setWidget(1, QtGui.QFormLayout.FieldRole, self.totalTime)
-        self.verticalLayoutWidget_3 = QtGui.QWidget(self.groupBox_5)
-        self.verticalLayoutWidget_3.setGeometry(QtCore.QRect(459, 160, 101, 31))
-        self.verticalLayoutWidget_3.setObjectName(_fromUtf8("verticalLayoutWidget_3"))
-        self.verticalLayout_3 = QtGui.QVBoxLayout(self.verticalLayoutWidget_3)
-        self.verticalLayout_3.setMargin(0)
+        self.verticalLayout_3 = QtGui.QVBoxLayout()
         self.verticalLayout_3.setObjectName(_fromUtf8("verticalLayout_3"))
-        self.pushButton_2 = QtGui.QPushButton(self.verticalLayoutWidget_3)
-        self.pushButton_2.setObjectName(_fromUtf8("pushButton_2"))
-        self.verticalLayout_3.addWidget(self.pushButton_2)
+        self.actionBiasRun = QtGui.QPushButton(self.formLayoutWidget_2)
+        self.actionBiasRun.setObjectName(_fromUtf8("actionBiasRun"))
+        self.verticalLayout_3.addWidget(self.actionBiasRun)
+        self.formLayout_2.setLayout(2, QtGui.QFormLayout.FieldRole, self.verticalLayout_3)
+        self.formLayoutWidget_8 = QtGui.QWidget(self.groupBox_5)
+        self.formLayoutWidget_8.setGeometry(QtCore.QRect(200, 20, 381, 101))
+        self.formLayoutWidget_8.setObjectName(_fromUtf8("formLayoutWidget_8"))
+        self.formLayout_8 = QtGui.QFormLayout(self.formLayoutWidget_8)
+        self.formLayout_8.setFieldGrowthPolicy(QtGui.QFormLayout.AllNonFixedFieldsGrow)
+        self.formLayout_8.setMargin(0)
+        self.formLayout_8.setObjectName(_fromUtf8("formLayout_8"))
+        self.label_19 = QtGui.QLabel(self.formLayoutWidget_8)
+        self.label_19.setObjectName(_fromUtf8("label_19"))
+        self.formLayout_8.setWidget(0, QtGui.QFormLayout.LabelRole, self.label_19)
+        self.currentrun_progress = QtGui.QProgressBar(self.formLayoutWidget_8)
+        self.currentrun_progress.setProperty("value", 0)
+        self.currentrun_progress.setObjectName(_fromUtf8("currentrun_progress"))
+        self.formLayout_8.setWidget(0, QtGui.QFormLayout.FieldRole, self.currentrun_progress)
+        self.label_22 = QtGui.QLabel(self.formLayoutWidget_8)
+        self.label_22.setObjectName(_fromUtf8("label_22"))
+        self.formLayout_8.setWidget(1, QtGui.QFormLayout.LabelRole, self.label_22)
+        self.totaltime_run = QtGui.QProgressBar(self.formLayoutWidget_8)
+        self.totaltime_run.setProperty("value", 0)
+        self.totaltime_run.setObjectName(_fromUtf8("totaltime_run"))
+        self.formLayout_8.setWidget(1, QtGui.QFormLayout.FieldRole, self.totaltime_run)
         self.tabWidget.addTab(self.bias, _fromUtf8(""))
         self.scripts = QtGui.QWidget()
         self.scripts.setObjectName(_fromUtf8("scripts"))
@@ -591,7 +609,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuQuit.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(1)
+        self.tabWidget.setCurrentIndex(2)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -645,7 +663,9 @@ class Ui_MainWindow(object):
         self.groupBox_5.setTitle(_translate("MainWindow", "Values", None))
         self.label_5.setText(_translate("MainWindow", "# samples / decade", None))
         self.label_6.setText(_translate("MainWindow", "total time [s]", None))
-        self.pushButton_2.setText(_translate("MainWindow", "RUN", None))
+        self.actionBiasRun.setText(_translate("MainWindow", "RUN", None))
+        self.label_19.setText(_translate("MainWindow", "Current run :", None))
+        self.label_22.setText(_translate("MainWindow", "Total time    :", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.bias), _translate("MainWindow", "BIAS", None))
         item = self.scriptTable.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "NAME", None))

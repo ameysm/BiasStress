@@ -1,7 +1,9 @@
 '''
 Created on Sep 9, 2013
 
-@author: adminssteudel
+This dialog will be shown when the user wants to upload a script to a particular device
+
+@author: Incalza Dario
 '''
 from PyQt4.QtGui import QDialog
 from PyQt4 import QtGui

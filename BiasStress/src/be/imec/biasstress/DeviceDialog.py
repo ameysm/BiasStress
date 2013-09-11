@@ -3,7 +3,7 @@ Created on Sep 5, 2013
 
 This class represents a dialog that enables the user to add an SMU device on a particular address and channel.
 
-@author: adminssteudel
+@author: Incalza Dario
 '''
 from PyQt4 import QtGui,QtCore
 from PyQt4.QtGui import QDialog
