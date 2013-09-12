@@ -94,7 +94,7 @@ class TFTController(AbstractController):
         self.__ui.step.setText(self.__currentTft.getStep())
     
 
-    def performSweep(self, gateDevice, drainDevice, gate_smu, drain_smu, start, stop, step,boolBackwards=False):
+    def performSweep(self, gateDevice, drainDevice, gate_smu, drain_smu, start, stop, drain,step,boolBackwards=False):
         gateDevice.reset()
         drainDevice.reset()
         gateDevice.clear_buffer()
@@ -108,7 +108,7 @@ class TFTController(AbstractController):
                 gate = start - i * step
             vgs.append(gate)
             
-        drainDevice.set_output_volts(1)
+        drainDevice.set_output_volts(drain)
         drainDevice.set_output_on()
         gateDevice.set_output_on()
         step_val = str(step)
@@ -155,14 +155,14 @@ class TFTController(AbstractController):
         
         start = int(self.__ui.vgstart.text())
         stop = int(self.__ui.vgend.text())
-        step = float(self.__ui.step.text());
-        
+        step = float(self.__ui.step.text())
+        drain = float(self.__ui.vds.text())
             
         vgs, igs, ids = self.performSweep(gateDevice, drainDevice, gate_smu, drain_smu, start, stop, step,False)
         boolFWBW = self.__ui.boolFWBW.isChecked()
     
         if boolFWBW:
-            vgs_back,igs_back,ids_back = self.performSweep(gateDevice, drainDevice, gate_smu, drain_smu, stop, start, step,True)
+            vgs_back,igs_back,ids_back = self.performSweep(gateDevice, drainDevice, gate_smu, drain_smu, stop, start,drain, step,True)
             t = Thread(target=self.__plotcontroller.plotIV,args=(ids, igs, vgs,ids_back,igs_back,vgs_back,))
             #self.__plotcontroller.plotIV(ids, igs, vgs,ids_back,igs_back,vgs_back)
             t.start()
@@ -213,6 +213,10 @@ class BiasController():
             self.totaltime = float(str(self.__ui.totalTime.text()))
             self.gate_bias = float(self.__ui.stressGateVoltage.text())
             self.drain_bias = float(self.__ui.drainStressVoltage.text())
+            self.start = int(self.__ui.vgstart.text())
+            self.stop = int(self.__ui.vgend.text())
+            self.step = float(self.__ui.step.text())
+            self.tft_drain = float(self.__ui.vds.text())
         except ValueError:
             self.__logger.log(Logger.ERROR,"Invalid BIAS values (decades,totaltime,bias stress,...) please correct these before retrying")
             return
@@ -266,7 +270,7 @@ class BiasController():
             
             gate_smu = gateDevice.getScriptSyntax()
             drain_smu = drainDevice.getScriptSyntax()
-            vgs, igs, ids = self.__tftcontroller.performSweep(gateDevice,drainDevice,gate_smu,drain_smu,-20, 20, 0.2,False)
+            vgs, igs, ids = self.__tftcontroller.performSweep(gateDevice,drainDevice,gate_smu,drain_smu,self.start, self.end,self.drain,self.step,False)
             self.__logger.log(Logger.INFO,'Sweep on timestamp %d sec - done' % (tijd_lijst[t]))
             self.__plotcontroller.plotIV_bias(ids,vgs)
             gateDevice.set_output_on()
@@ -277,10 +281,8 @@ class BiasController():
             drainDevice.set_output_volts(self.drain_bias)
             
         end_time = time.time()  
-        
         gateDevice.set_output_off()
         drainDevice.set_output_off()
-    
         self.__logger.log(Logger.INFO, 'Bias run completed in %d sec' %(end_time - init_time))
         self.resetBias()
         self.runActive = False

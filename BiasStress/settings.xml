@@ -7,9 +7,21 @@
 	<constants>
 		<constant name="compliance_current" value="0.1"/>
 		<constant name="compliance_voltage" value="30"/>
-		<constant name="vg_start" value="-30"/>
-		<constant name="vg_end" value="30"/>
+		<constant name="vg_start" value="-20"/>
+		<constant name="vg_end" value="20"/>
 		<constant name="step" value="2e-1"/>
 		<constant name="vds" value="1"/>
 	</constants>
+	<devices>
+		<!--- following devices are a default mapping. These will be loaded when the user presses the auto connect button -->
+		<device node="Vs" address="27" channel="B"/>
+		<device node="Vd" address="26" channel="B"/>
+		<device node="Vg" address="26" channel="A"/>
+	</devices>
+	<bias-parameters>
+		<bias-parameter name="stress-gate-voltage" value="20"/>
+		<bias-parameter name="stress-drain-voltage" value="0"/>
+		<bias-parameter name="default-total-stress-time" value="10000"/>
+		<bias-parameter name="default-decades" value="4" />
+	</bias-parameters>
 </settings>
