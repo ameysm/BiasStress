@@ -242,6 +242,15 @@ class SMU(object):
         script = "loadscript " + scriptfile.getName() + "\n" + flines + "\n" + "endscript"
         self.__device.write(script)
     
+    def getScriptSyntax(self):
+        if self.__channel=='A':
+            return 'smua'
+        elif self.__channel=='B':
+            return 'smub'
+        else:
+            raise ValueError("Invalid channel sent to function set_source_type_voltage")
+        
+    
     
 
 class TFT_RUN(object):
@@ -383,7 +392,6 @@ class TFT_RUN(object):
         self.setBuffers()
         self.display('Amps')
         self.Source('Volts')
-        self.setILimit(100.0)
         self.setVd(vd)
         vgs, igs, ids = self.sweepGate(start, stop, step)
         ids = self.makeFloat(ids, 1)

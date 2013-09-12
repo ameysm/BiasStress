@@ -10,8 +10,7 @@ from PyQt4.QtGui import QDialog
 from views.view_add_device import Ui_addDeviceDialog
 from hardware.SMU import SMU
 from util.Logger import Logger
-import visa
-from pyvisa.visa_exceptions import VisaIOError
+
 class DeviceDialog(QDialog):
    
     def __init__(self,parent,deviceManager,logger):
@@ -33,7 +32,7 @@ class DeviceDialog(QDialog):
         address = str(self.dialog.adressValue.text())
         channel = str(self.dialog.channelValue.currentText())
         node = str(self.dialog.controllingVoltageValue.currentText())
-        smu = self.tryDeviceConnection(address, channel, node)
+        smu = self.__deviceManager.tryDeviceConnection(address, channel, node)
         if smu != None:
             succes = self.__deviceManager.addDevice(smu)
             if succes == True:
@@ -45,11 +44,4 @@ class DeviceDialog(QDialog):
             self.__logger.log(Logger.ERROR,'Device on address '+address+' and operating on channel '+channel+' is not loaded succesfully. Seems the connection was no initialized correctly. Please ensure the device is turned on and connected through GPIB/USB.')
         self.close() 
         
-    def tryDeviceConnection(self,address,channel,node):
-        try:
-            device = visa.instrument('GPIB::'+str(address),term_chars='\n', send_end=True)
-            name = device.ask("*IDN?")
-            smu = SMU(address,channel,node,device,name)
-            return smu
-        except VisaIOError:
-            return None
+    

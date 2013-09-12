@@ -15,6 +15,14 @@ class SettingsParser(object):
     def parse(self):
         self.parseTftCharacteristics()
         self.parseConstants()
+        self.parseDefaultDevices()
+        self.parseBiasConfig()
+    
+    def parseBiasConfig(self):
+        self.__biasconfig = dict()
+        configList = self.__xmldoc.getElementsByTagName('bias-parameter')
+        for c in configList:
+            self.__biasconfig[c.attributes['name'].value] =c.attributes['value'].value 
         
     def parseTftCharacteristics(self):
         characteristiclist = self.__xmldoc.getElementsByTagName('characteristic')
@@ -28,15 +36,27 @@ class SettingsParser(object):
         constantList = self.__xmldoc.getElementsByTagName('constant')
         for c in constantList:
             self.__constants[c.attributes['name'].value] =c.attributes['value'].value 
+    
+    def parseDefaultDevices(self):
+        self.__devices = []
+        deviceList = self.__xmldoc.getElementsByTagName('device')
+        for d in deviceList:
+            self.__devices.append((d.attributes['node'].value,d.attributes['address'].value,d.attributes['channel'].value))
             
     def getConstants(self):
         return self.__constants
+    
+    def getDefaultDevices(self):
+        return self.__devices
     
     def getTFTCharacteristics(self):
         return self.__characteristics
     
     def getConstantValue(self,name):
         return self.getConstants()[name]
+    
+    def getBiasConfig(self,parametername):
+        return self.__biasconfig[parametername]
     
     def getDefaultTFTNodeValues(self):
         node_values = []

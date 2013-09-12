@@ -26,14 +26,14 @@ class BiasStress(QtGui.QMainWindow):
         try:
             self.__settingsParser = SettingsParser()
             self.__settingsParser.parse()
-            self.__deviceController = DeviceController(self.ui.deviceTable)
+            self.__deviceController = DeviceController(self.ui)
             self.__complianceController = ComplianceController(self.ui,self.__deviceController,self.__logger,self.__settingsParser.getConstantValue('compliance_current'),self.__settingsParser.getConstantValue('compliance_voltage'));
             self.__deviceController.addDeviceListener(self.__complianceController)
             self.__scriptController = ScriptController(self.ui.scriptTable,self.__deviceController,self.__logger)
             self.__plotController = PlotController(self.ui.plotWidget)
             self.__tftController = TFTController(self.__deviceController,self.ui,self.__logger,self.__plotController,self.__settingsParser.getTFTCharacteristics(),self.__settingsParser.getDefaultTFTNodeValues())
             self.__dbController = DatabaseController(self.ui,self.__logger,self.__tftController)
-            self.__biasController = BiasController(self.ui,self.__logger)
+            self.__biasController = BiasController(self.ui,self.__logger,self.__tftController,self.__deviceController,self.__plotController)
             self.initialize_gui()
         except IOError:
             QtGui.QMessageBox.warning(None, QtCore.QString('Error settings'), 'The settings file is either missing or has the wrong syntax. Please ensure there is a file "settings.xml" present in the root directory of this application. Aborting.')
@@ -43,7 +43,15 @@ class BiasStress(QtGui.QMainWindow):
         self.register_gui_functions()
         #self.ui.bias.setEnabled(False)
         self.ui.tftwidget.setEnabled(False)
+        self.initializeBiasDefault()
         self.__logger.log(Logger.INFO,"###### Welcome to BiasStress ######")
+    
+    def initializeBiasDefault(self):
+        self.ui.stressGateVoltage.setText(self.__settingsParser.getBiasConfig("stress-gate-voltage"))
+        self.ui.drainStressVoltage.setText(self.__settingsParser.getBiasConfig("stress-drain-voltage"))
+        self.ui.samplesPerDecade.setValue(int(self.__settingsParser.getBiasConfig("default-decades")))
+        self.ui.totalTime.setText(self.__settingsParser.getBiasConfig("default-total-stress-time"))
+        self.ui.positiveBiasDirection.setChecked(True)
         
     def register_gui_functions(self):
         self.ui.actionQuit.triggered.connect(QtGui.qApp.quit)
@@ -56,6 +64,8 @@ class BiasStress(QtGui.QMainWindow):
         self.ui.openScript.clicked.connect(self.openScript)
         self.ui.runTFT.clicked.connect(self.__tftController.tftRun)
         self.ui.loadScriptToDevice.clicked.connect(self.__scriptController.loadSelectedScripts)
+        self.ui.actionAutoConnect.clicked.connect(self.autoConnectDevices)
+        self.ui.actionBiasResetDefault.clicked.connect(self.initializeBiasDefault)
         
         ##db actions
         self.ui.actionOpenDatabase.clicked.connect(self.__dbController.chooseDatabaseFile)
@@ -104,7 +114,20 @@ class BiasStress(QtGui.QMainWindow):
         else:
             msg = "No devices where selected"
             QtGui.QMessageBox.information(self, "Remove devices", msg, buttons=QtGui.QMessageBox.Ok, defaultButton=QtGui.QMessageBox.NoButton)
-
+    
+    def autoConnectDevices(self):
+        for (node,address,channel) in self.__settingsParser.getDefaultDevices():
+            smu = self.__deviceController.tryDeviceConnection(address, channel, node)
+            if smu != None:
+                succes = self.__deviceController.addDevice(smu)
+                if succes == True:
+                    self.__logger.log(Logger.INFO,'Default device address '+address+' and operating on channel '+channel+' is loaded succesfully and mapped to node : '+smu.getNode()+' \n Additional info :: '+smu.getName())
+                else:
+                    self.__logger.log(Logger.WARNING,'Default device on address '+address+' and operating on channel '+channel+' is not loaded succesfully. Please check if the channel or node is not already taken ?')
+                    
+            else:
+                self.__logger.log(Logger.WARNING,'Default device on address '+address+' and operating on channel '+channel+' is not loaded succesfully. Seems the connection was no initialized correctly. Please ensure the device is turned on and connected through GPIB/USB.')
+    
     def openScript(self):
         path = str(QtGui.QFileDialog.getOpenFileName(self, 'Load Script...', '/home','*.txt'))
         if path.strip() =="":

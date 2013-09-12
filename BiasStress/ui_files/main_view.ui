@@ -512,7 +512,7 @@
      <enum>QTabWidget::North</enum>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>2</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -1088,12 +1088,12 @@
        <rect>
         <x>10</x>
         <y>10</y>
-        <width>781</width>
+        <width>401</width>
         <height>211</height>
        </rect>
       </property>
       <property name="title">
-       <string>Values</string>
+       <string>Bias Run</string>
       </property>
       <widget class="QWidget" name="formLayoutWidget_2">
        <property name="geometry">
@@ -1101,10 +1101,13 @@
          <x>10</x>
          <y>20</y>
          <width>179</width>
-         <height>101</height>
+         <height>108</height>
         </rect>
        </property>
        <layout class="QFormLayout" name="formLayout_2">
+        <property name="fieldGrowthPolicy">
+         <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+        </property>
         <item row="0" column="0">
          <widget class="QLabel" name="label_5">
           <property name="text">
@@ -1118,7 +1121,7 @@
         <item row="1" column="0">
          <widget class="QLabel" name="label_6">
           <property name="text">
-           <string>total time [s]</string>
+           <string>total stress time [s]</string>
           </property>
          </widget>
         </item>
@@ -1136,15 +1139,22 @@
           </item>
          </layout>
         </item>
+        <item row="3" column="1">
+         <widget class="QPushButton" name="actionAbortBiasStress">
+          <property name="text">
+           <string>ABORT</string>
+          </property>
+         </widget>
+        </item>
        </layout>
       </widget>
       <widget class="QWidget" name="formLayoutWidget_8">
        <property name="geometry">
         <rect>
-         <x>200</x>
-         <y>20</y>
+         <x>10</x>
+         <y>160</y>
          <width>381</width>
-         <height>101</height>
+         <height>31</height>
         </rect>
        </property>
        <layout class="QFormLayout" name="formLayout_8">
@@ -1152,34 +1162,158 @@
          <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
         </property>
         <item row="0" column="0">
-         <widget class="QLabel" name="label_19">
+         <widget class="QLabel" name="label_22">
           <property name="text">
-           <string>Current run :</string>
+           <string>Total stress time       :</string>
           </property>
          </widget>
         </item>
         <item row="0" column="1">
-         <widget class="QProgressBar" name="currentrun_progress">
-          <property name="value">
-           <number>0</number>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="0">
-         <widget class="QLabel" name="label_22">
-          <property name="text">
-           <string>Total time    :</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="1">
          <widget class="QProgressBar" name="totaltime_run">
           <property name="value">
            <number>0</number>
           </property>
+          <property name="invertedAppearance">
+           <bool>true</bool>
+          </property>
          </widget>
         </item>
        </layout>
+      </widget>
+      <widget class="QLabel" name="label_19">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>140</y>
+         <width>111</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Current stress cycle :</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="currentCycleStatus">
+       <property name="geometry">
+        <rect>
+         <x>120</x>
+         <y>140</y>
+         <width>231</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+       <property name="textInteractionFlags">
+        <set>Qt::NoTextInteraction</set>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QGroupBox" name="groupBox_9">
+      <property name="geometry">
+       <rect>
+        <x>420</x>
+        <y>10</y>
+        <width>241</width>
+        <height>211</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Stress Configuration</string>
+      </property>
+      <widget class="QWidget" name="formLayoutWidget_9">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>30</y>
+         <width>221</width>
+         <height>61</height>
+        </rect>
+       </property>
+       <layout class="QFormLayout" name="formLayout_9">
+        <property name="fieldGrowthPolicy">
+         <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+        </property>
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_23">
+          <property name="text">
+           <string> Gate stress voltage :</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLineEdit" name="stressGateVoltage"/>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_24">
+          <property name="text">
+           <string> Drain stress voltage : </string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QLineEdit" name="drainStressVoltage"/>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QGroupBox" name="groupBox_10">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>100</y>
+         <width>221</width>
+         <height>71</height>
+        </rect>
+       </property>
+       <property name="title">
+        <string>Direction</string>
+       </property>
+       <widget class="QRadioButton" name="positiveBiasDirection">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>20</y>
+          <width>181</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>positive</string>
+        </property>
+       </widget>
+       <widget class="QRadioButton" name="radioButton_2">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>50</y>
+          <width>191</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>negative</string>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QPushButton" name="actionBiasResetDefault">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>180</y>
+         <width>221</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>RESET DEFAULTS</string>
+       </property>
       </widget>
      </widget>
     </widget>
@@ -1381,10 +1515,17 @@
        <x>430</x>
        <y>20</y>
        <width>121</width>
-       <height>71</height>
+       <height>83</height>
       </rect>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QPushButton" name="actionAutoConnect">
+        <property name="text">
+         <string>Auto connect</string>
+        </property>
+       </widget>
+      </item>
       <item>
        <widget class="QPushButton" name="actionAddDevice">
         <property name="text">

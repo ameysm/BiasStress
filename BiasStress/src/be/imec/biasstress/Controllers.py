@@ -3,11 +3,12 @@ from be.imec.biasstress.util.Logger import Logger
 from PyQt4 import QtCore,QtGui
 from be.imec.biasstress.util.Toolbox import isANumber
 from be.imec.biasstress.ScriptLoaderDialog import ScriptLoaderDialog
-import numpy,os,sqlite3
+import os,sqlite3,visa
+from hardware.SMU import SMU
 from threading import Thread
 from be.imec.biasstress.Settings import TFTCharacteristic
 from util import Toolbox
-
+from visa import VisaIOError
 
 '''
 Created on Sep 5, 2013
@@ -93,21 +94,27 @@ class TFTController(AbstractController):
         self.__ui.step.setText(self.__currentTft.getStep())
     
 
-    def performSweep(self, gateDevice, drainDevice, gate_smu, drain_smu, start, stop, step,boolBackwards):
+    def performSweep(self, gateDevice, drainDevice, gate_smu, drain_smu, start, stop, step,boolBackwards=False):
+        gateDevice.reset()
+        drainDevice.reset()
+        gateDevice.clear_buffer()
+        drainDevice.clear_buffer()
         self.__logger.log(Logger.INFO, "Performing a TFT sweep from start gate voltage :"+str(start)+" and end gate voltage "+str(stop)+" with step size "+str(step))
         punten = int(abs(stop - start) / step) + 1
         vgs = []
         for i in range(0, punten):
             gate = start + i * step
+            if boolBackwards == True:
+                gate = start - i * step
             vgs.append(gate)
             
         drainDevice.set_output_volts(1)
         drainDevice.set_output_on()
         gateDevice.set_output_on()
         step_val = str(step)
-        if boolBackwards:
+        if boolBackwards == True:
             step_val = str(-step)
-        script = 'for x = 1, ' + str(punten) + ' do ' + gate_smu + '.source.levelv = ' + str(start) + ' + x * ' + step_val + ' delay(0.25) ' + gate_smu + '.measure.i(' + gate_smu + '.nvbuffer1)  ' + drain_smu + '.measure.i(' + drain_smu + '.nvbuffer1) waitcomplete() end count=' + gate_smu + '.nvbuffer1.n print("OK", count)'
+        script = 'for x = 1, ' + str(punten) + ' do ' + gate_smu + '.source.levelv = ' + str(start) + ' + x * ' + step_val + ' delay(0.05) ' + gate_smu + '.measure.i(' + gate_smu + '.nvbuffer1)  ' + drain_smu + '.measure.i(' + drain_smu + '.nvbuffer1) waitcomplete() end count=' + gate_smu + '.nvbuffer1.n print("OK", count)'
         gateDevice.write(script)
         readout = gateDevice.read()
         status = readout[0:2]
@@ -120,15 +127,19 @@ class TFTController(AbstractController):
         
         gateDevice.set_output_off()
         drainDevice.set_output_off()
-
+       
         return vgs, igs, ids
 
     def tftRun(self):
-        self.__logger.log(Logger.INFO,"Performing a TFT sweep. The GUI will be unresponsive during the run.")
-        self.__plotcontroller.clearPlot()
         gateDevice = self.getDeviceController().getDeviceMappedToNode('Vg')
         drainDevice = self.getDeviceController().getDeviceMappedToNode('Vd')
         sourceDevice = self.getDeviceController().getDeviceMappedToNode('Vs')
+        if gateDevice == None or drainDevice == None or sourceDevice == None:
+            self.__logger.log(Logger.ERROR,"Make sure drain,source and gate voltages are connected and loaded into the application.")
+            return
+        self.__logger.log(Logger.INFO,"Performing a TFT sweep. The GUI will be unresponsive during the run.")
+        QtGui.QApplication.processEvents()
+        self.__plotcontroller.clearPlot()
         sourceDevice.set_output_volts(0)
         sourceDevice.set_output_on()
         gateDevice.clear_buffer()
@@ -138,13 +149,9 @@ class TFTController(AbstractController):
         if gateDevice.getAddress() != drainDevice.getAddress():
             self.__logger.log(Logger.ERROR,"Gate and drain should be connected to the same Keithley device.")
             return
-    
-        if gateDevice.getChannel() == 'A':
-            gate_smu = 'smua'
-            drain_smu = 'smub'
-        else:
-            gate_smu = 'smub'
-            drain_smu ='smua'
+       
+        gate_smu = gateDevice.getScriptSyntax()
+        drain_smu = drainDevice.getScriptSyntax()
         
         start = int(self.__ui.vgstart.text())
         stop = int(self.__ui.vgend.text())
@@ -153,13 +160,14 @@ class TFTController(AbstractController):
             
         vgs, igs, ids = self.performSweep(gateDevice, drainDevice, gate_smu, drain_smu, start, stop, step,False)
         boolFWBW = self.__ui.boolFWBW.isChecked()
-        
+    
         if boolFWBW:
             vgs_back,igs_back,ids_back = self.performSweep(gateDevice, drainDevice, gate_smu, drain_smu, stop, start, step,True)
             t = Thread(target=self.__plotcontroller.plotIV,args=(ids, igs, vgs,ids_back,igs_back,vgs_back,))
             #self.__plotcontroller.plotIV(ids, igs, vgs,ids_back,igs_back,vgs_back)
             t.start()
             self.__logger.log(Logger.INFO,"Data for forward and backward sweep is being plotted")
+        
             return vgs,igs,ids,vgs_back,igs_back,ids_back
         else:
             t = Thread(target=self.__plotcontroller.plotIV,args=(ids, igs, vgs,))
@@ -172,69 +180,142 @@ This class controls every aspect of managing the BIAS tabwidget and
 '''  
 import time      
 class BiasController():
-    def __init__(self,ui,logger):
+    def __init__(self,ui,logger,tftcontroller,devicecontroller,plotcontroller):
         self.__ui = ui
         self.__logger = logger
+        self.__devicecontroller = devicecontroller
+        self.__plotcontroller = plotcontroller
+        self.__tftcontroller = tftcontroller
         self.__ui.bias.setEnabled(True)
+        self.__ui.actionAbortBiasStress.setEnabled(False)
         self.registerBiasFunctions()
         self.totalpbar = self.__ui.totaltime_run
-        self.currentpbar = self.__ui.currentrun_progress
-        
+        self.runActive = False
 
-    
     def registerBiasFunctions(self):
         self.__ui.actionBiasRun.clicked.connect(self.biasRun)
+        self.__ui.actionAbortBiasStress.clicked.connect(self.abortRun)
+    
+    def abortRun(self):
+        if self.runActive == True:
+            quit_msg = QtCore.QString("Are you sure you want to abort the current bias stress run ?  All data will be lost.")
+            reply = QtGui.QMessageBox.question(None, QtCore.QString("Are you sure ?"), quit_msg, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+            if reply == QtGui.QMessageBox.Yes:
+                self.runActive = False
+                self.crono.abort()
+            else:
+                return
+            
     
     def biasRun(self):
-        self.nrDecades = int(self.__ui.samplesPerDecade.value())
-        self.totaltime = float(str(self.__ui.totalTime.text()))
-        self.__logger.log(Logger.INFO,"Decades "+str(self.nrDecades)+", total time "+str(self.totaltime))
-        self.startTotalLoop()
-        self.currentLoop()
-       
+        try:
+            self.nrDecades = int(self.__ui.samplesPerDecade.value())
+            self.totaltime = float(str(self.__ui.totalTime.text()))
+            self.gate_bias = float(self.__ui.stressGateVoltage.text())
+            self.drain_bias = float(self.__ui.drainStressVoltage.text())
+        except ValueError:
+            self.__logger.log(Logger.ERROR,"Invalid BIAS values (decades,totaltime,bias stress,...) please correct these before retrying")
+            return
+        self.__logger.log(Logger.INFO,"Decades "+str(self.nrDecades)+", total stress time "+str(self.totaltime))
+        self.performBias()
 
-    def startTotalLoop(self):
-        self.totalpbar.reset()
+    def performBias(self):
+        self.runActive = True
+        self.__ui.actionBiasRun.setEnabled(False)
+        self.__ui.actionAbortBiasStress.setEnabled(True)
+        self.__ui.tftwidget.setEnabled(False)
+        gateDevice = self.__devicecontroller.getDeviceMappedToNode('Vg')
+        drainDevice = self.__devicecontroller.getDeviceMappedToNode('Vd')
+        sourceDevice = self.__devicecontroller.getDeviceMappedToNode('Vs')
+
+        if gateDevice == None or drainDevice == None or sourceDevice == None:
+            self.__logger.log(Logger.ERROR,"Three devices should be connected to the three different nodes before a bias run can be executed.")
+            return
+        
+        drainDevice.set_output_volts(0)
+        drainDevice.set_output_on()
+        
+        self.__plotcontroller.clearPlot()
+        tijd_lijst = Toolbox.makeTime(0, self.totaltime, self.nrDecades)
+        self.__logger.log(Logger.INFO,'Stress times: '+' - '.join([str(x) for x in tijd_lijst]))
+        self.__logger.log(Logger.INFO,'Starting Bias run with gate bias stress : %g V and drain stress : %d V'%(self.gate_bias,self.drain_bias))
         self.totalpbar.setMinimum(0)
         self.totalpbar.setMaximum(self.totaltime)
-        crono = Crono()
-        crono.setTime(self.totaltime)
-        crono.tick.connect(self.totalpbar.setValue)
-        t1 = Thread(target=crono.checkStatus)
-        t1.start()
+        init_time = time.time()
+        for t in range(0, len(tijd_lijst)):
+            QtGui.QApplication.processEvents()
+            self.__ui.currentCycleStatus.setText('Cycle %d: 0 / %d sec' %(t,tijd_lijst[t]))
+            start = time.time()
+            if t != 0:
+                eind = start + tijd_lijst[t] - tijd_lijst[t-1]
+                ctime = start - tijd_lijst[t-1]
+            elif t==0:
+                eind = start + tijd_lijst[t]
+                ctime = start
+                
+            self.crono = Crono()
+            self.crono.tick.connect(self.totalpbar.setValue)
+            self.crono.status.connect(self.__ui.currentCycleStatus.setText)
+            self.crono.start(tijd_lijst, t, eind, ctime)
+            if self.runActive == False:
+                self.__logger.log(Logger.WARNING,"Bias run aborted on user's request.")
+                self.resetBias()
+                return
+            self.__ui.currentCycleStatus.setText('Cycle %d: %d / %d sec' % (t,tijd_lijst[t], tijd_lijst[t]))
+            self.__logger.log(Logger.INFO,'Sweeping...')
+            
+            gate_smu = gateDevice.getScriptSyntax()
+            drain_smu = drainDevice.getScriptSyntax()
+            vgs, igs, ids = self.__tftcontroller.performSweep(gateDevice,drainDevice,gate_smu,drain_smu,-20, 20, 0.2,False)
+            self.__logger.log(Logger.INFO,'Sweep on timestamp %d sec - done' % (tijd_lijst[t]))
+            self.__plotcontroller.plotIV_bias(ids,vgs)
+            gateDevice.set_output_on()
+            drainDevice.set_output_on()
+            
+            #Apply Bias
+            gateDevice.set_output_volts(self.gate_bias)
+            drainDevice.set_output_volts(self.drain_bias)
+            
+        end_time = time.time()  
+        
+        gateDevice.set_output_off()
+        drainDevice.set_output_off()
     
-    def currentLoop(self):
-        result = Toolbox.makeTime(0, self.totaltime, self.nrDecades)
-        t_old = result.pop(0)
-        crono = Crono()
-        crono.tick.connect(self.currentpbar.setValue)
-        for t in result:
-            self.currentpbar.reset()
-            self.currentpbar.setMinimum(0)
-            self.currentpbar.setMaximum(t-t_old)
-            crono.setTime(t-t_old)
-            crono.checkStatus()
-            if self.totaltime == t:
-                break
-            t_old = t
-
-                 
-class Crono(QtCore.QThread):
+        self.__logger.log(Logger.INFO, 'Bias run completed in %d sec' %(end_time - init_time))
+        self.resetBias()
+        self.runActive = False
     
-    tick = QtCore.pyqtSignal(int, name="changed") 
+    def resetBias(self):
+        self.__ui.tftwidget.setEnabled(True)
+        self.__ui.actionBiasRun.setEnabled(True)
+        self.__ui.actionAbortBiasStress.setEnabled(False)
+        self.totalpbar.reset()
+        self.__ui.currentCycleStatus.setText("")
+        self.crono = None
+        
+class Crono(QtCore.QObject):
+    
+    tick = QtCore.pyqtSignal(int, name="changed")
+    status = QtCore.pyqtSignal(str,name="status") 
 
-    def __init__(self, parent=None):
-        QtCore.QThread.__init__(self,parent)
+    def __init__(self):
+        QtCore.QObject.__init__(self)
+        self.stop = False
         
     def setTime(self,time):
         self.timeinter = int(time)
         
-    def checkStatus(self):
-        for x in range(0,self.timeinter+1):
-            self.tick.emit(x)                     
-            time.sleep(1)          
+    def start(self,tijd_lijst, t, eind, ctime):
+        while time.time() <= eind and self.stop == False:
+            curr_tijd = time.time() - ctime
+            if curr_tijd != 0:
+                self.tick.emit(curr_tijd)
+            #self.totalpbar.setValue(curr_tijd)
+            self.status.emit('Cycle %d: %d / %d sec' % (t, curr_tijd, tijd_lijst[t]))
+            QtGui.QApplication.processEvents()   
     
-        
+    def abort(self):
+        self.stop = True
     
 '''
 This class controls every aspect of managing the devices to which this application connects with.
@@ -242,10 +323,11 @@ This class controls every aspect of managing the devices to which this applicati
 
 class DeviceController(AbstractController):
   
-    def __init__(self,deviceTableView,visa=None):
+    def __init__(self,ui,visa=None):
         AbstractController.__init__(self, visa)
         self.__deviceList = []
-        self.__deviceTable = deviceTableView
+        self.__ui = ui
+        self.__deviceTable = self.__ui.deviceTable
         self.__addressList=[]
         self.__nodemapping=dict()
         self.__listeners=[]
@@ -257,19 +339,34 @@ class DeviceController(AbstractController):
             self.__deviceList.append(device)
             self.__addressList.append(device.getAddress())
             self.__nodemapping[device.getNode()] = device
+            if len(self.__deviceList) >= 3:
+                self.__ui.tftwidget.setEnabled(True)
+                self.__ui.bias.setEnabled(True)
             self.updateTableView()
             for listener in self.__listeners:
                 listener.notifyDeviceAttached(device)
             return True
         else:
             return False
-
+    
+    def tryDeviceConnection(self,address,channel,node):
+        try:
+            device = visa.instrument('GPIB::'+str(address),term_chars='\n', send_end=True)
+            name = device.ask("*IDN?")
+            smu = SMU(address,channel,node,device,name)
+            return smu
+        except VisaIOError:
+            return None
+    
     def addDeviceListener(self,listener):
         self.__listeners.append(listener)
     def getDeviceMappedToNode(self,node):
         return self.__nodemapping.get(node)
 
     def removeMappingNode(self,node):
+        if len(self.__nodemapping) < 3:
+            self.__ui.bias.setEnabled(False)
+            self.__ui.tftwidget.setEnabled(False)
         self.__nodemapping.pop(node)
         
     def getDevice(self,deviceid):
@@ -498,7 +595,7 @@ class ScriptController(object):
     def loadSelectedScripts(self):
         script = self.getSelectedScript()
         if script == None:
-            raise ValueError("Should not happen, script = Nonetype")
+            return
         dialog = ScriptLoaderDialog(None,script,self.__devicecontroller,self.__logger)
         dialog.exec_()
         return
@@ -536,9 +633,18 @@ class PlotController(object):
         if Id_back != None:
             Id_back = [abs(float(x)) for x in Id_back]
             Ig_back = [abs(float(x)) for x in Ig_back]
-            self.__plotWidget.canvas.ax.plot(V,Id_back,'b',label='I_ds_back')
-            self.__plotWidget.canvas.ax.plot(V,Ig_back,'r--',label='I_gs_back')
+            self.__plotWidget.canvas.ax.plot(Vg_back,Id_back,'b',label='I_ds_back')
+            self.__plotWidget.canvas.ax.plot(Vg_back,Ig_back,'r--',label='I_gs_back')
         legend = self.__plotWidget.canvas.ax.legend(loc='upper left', shadow=True)
+        self.__plotWidget.canvas.draw()
+    
+    def plotIV_bias(self,Id,V):
+        Id = [abs(float(x)) for x in Id]
+        self.__plotWidget.canvas.ax.set_title("I-V Curve")
+        self.__plotWidget.canvas.ax.set_xlabel("V_gate")
+        self.__plotWidget.canvas.ax.set_ylabel("I (log scale)")
+        self.__plotWidget.canvas.ax.set_yscale('log')
+        self.__plotWidget.canvas.ax.plot(V,Id,'g',label='I_ds')
         self.__plotWidget.canvas.draw()
         
 '''
@@ -615,4 +721,3 @@ class DatabaseController(object):
             self.__currentConnection.close()
             return tftConfigs
         return tftConfigs
-        

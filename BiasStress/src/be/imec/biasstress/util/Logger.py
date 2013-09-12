@@ -38,6 +38,7 @@ class Logger(object):
         now = datetime.now()
         time = str(now.strftime("%H:%M"))
         self.__console.append(time+prefix+" >> "+text)
+        QtGui.QApplication.processEvents()
     
     def clearLog(self):
         self.__console.clear()
