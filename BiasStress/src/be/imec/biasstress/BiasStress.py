@@ -41,7 +41,7 @@ class BiasStress(QtGui.QMainWindow):
      
     def initialize_gui(self):
         self.register_gui_functions()
-        #self.ui.bias.setEnabled(False)
+        self.ui.bias.setEnabled(False)
         self.ui.tftwidget.setEnabled(False)
         self.initializeBiasDefault()
         self.__logger.log(Logger.INFO,"###### Welcome to BiasStress ######")
