@@ -7,7 +7,8 @@ BiasStress is a GUI for controlling hardware in order to stress and measure char
 
 ##Dependencies##
 
-This application uses the VISA interface to communicate over a GPIB connection.
+This application uses the VISA interface to communicate over a GPIB connection. The GUI is developed using the Qt4 framework and
+is compiled using the PyQt4 compiler.
 
 ##Author##
 
