@@ -9,13 +9,18 @@ from PyQt4 import QtGui,QtCore
 from views.main_view import Ui_MainWindow
 from util.Logger import Logger
 from DeviceDialog import DeviceDialog
+from WaferDialog import WaferDialog
 import os
 from models.Script import Script
-from Controllers import TFTController,DeviceController,ComplianceController,PlotController,ScriptController,DatabaseController,BiasController
+from Controllers import TFTController,DeviceController,ComplianceController,PlotController,ScriptController,DatabaseController,BiasController,WaferController
 from Settings import SettingsParser
 import sys
+import errno
+
 class BiasStress(QtGui.QMainWindow):
    
+
+    
     def __init__(self,parent=None):
         QtGui.QWidget.__init__(self, parent)
         
@@ -26,6 +31,9 @@ class BiasStress(QtGui.QMainWindow):
         try:
             self.__settingsParser = SettingsParser()
             self.__settingsParser.parse()
+            self.__working_dir = self.__settingsParser.getAppConstant('working_dir')
+            self.checkWorkingDir(self.__working_dir)
+            self.__waferController = WaferController(self.__logger,self.__working_dir)
             self.__deviceController = DeviceController(self.ui)
             self.__complianceController = ComplianceController(self.ui,self.__deviceController,self.__logger,self.__settingsParser.getConstantValue('compliance_current'),self.__settingsParser.getConstantValue('compliance_voltage'));
             self.__deviceController.addDeviceListener(self.__complianceController)
@@ -35,16 +43,34 @@ class BiasStress(QtGui.QMainWindow):
             self.__dbController = DatabaseController(self.ui,self.__logger,self.__tftController)
             self.__biasController = BiasController(self.ui,self.__logger,self.__tftController,self.__deviceController,self.__plotController)
             self.initialize_gui()
+            self.showWaferWizard()
         except IOError:
             QtGui.QMessageBox.warning(None, QtCore.QString('Error settings'), 'The settings file is either missing or has the wrong syntax. Please ensure there is a file "settings.xml" present in the root directory of this application. Aborting.')
             sys.exit()
-     
+        except OSError:
+            QtGui.QMessageBox.warning(None, QtCore.QString('Error settings'), 'The settings file misses a valid working directory. Please fix before restart. Make sure the permissions are valid for the application to access this folder.')
+            sys.exit()
+    
+    def showWaferWizard(self):
+        dialog = WaferDialog(self, self.__waferController, self.__logger)
+        dialog.exec_()
+
+    def checkWorkingDir(self,d):
+        if os.path.isdir(d) == True :
+            return
+        else:
+            try:
+                os.makedirs(d)
+            except OSError as exception:
+                if exception.errno != errno.EEXIST:
+                    raise
     def initialize_gui(self):
         self.register_gui_functions()
         self.ui.bias.setEnabled(False)
         self.ui.tftwidget.setEnabled(False)
         self.initializeBiasDefault()
         self.__logger.log(Logger.INFO,"###### Welcome to BiasStress ######")
+        self.__logger.log(Logger.INFO,"All data from runs will be saved in the current working directory : "+self.__working_dir)
     
     def initializeBiasDefault(self):
         self.ui.stressGateVoltage.setText(self.__settingsParser.getBiasConfig("stress-gate-voltage"))
@@ -59,18 +85,24 @@ class BiasStress(QtGui.QMainWindow):
         self.ui.clearLogAction.clicked.connect(self.__logger.clearLog)
         self.ui.saveLogAction.clicked.connect(self.__logger.saveLog)
         self.ui.actionAddDevice.clicked.connect(self.showAddDeviceDialog)
+        self.ui.actionMenuAddDevice.triggered.connect(self.showAddDeviceDialog)
         self.ui.boolAdvancedScripting.clicked.connect(self.toggleAdvanceScripting)
         self.ui.actionRemoveDevice.clicked.connect(self.deleteDevice)
         self.ui.openScript.clicked.connect(self.openScript)
+        self.ui.actionImport_Script.triggered.connect(self.openScript)
         self.ui.runTFT.clicked.connect(self.__tftController.tftRun)
         self.ui.loadScriptToDevice.clicked.connect(self.__scriptController.loadSelectedScripts)
         self.ui.actionAutoConnect.clicked.connect(self.autoConnectDevices)
         self.ui.actionBiasResetDefault.clicked.connect(self.initializeBiasDefault)
+        self.ui.actionCreate_Wafer.triggered.connect(self.showWaferWizard)
         
         ##db actions
         self.ui.actionOpenDatabase.clicked.connect(self.__dbController.chooseDatabaseFile)
+        self.ui.actionOpen_Database.triggered.connect(self.__dbController.chooseDatabaseFile)
         self.ui.actionNewDb.clicked.connect(self.__dbController.createNewDbFile)
+        self.ui.actionCreate_Database.triggered.connect(self.__dbController.createNewDbFile)
         self.ui.actionSaveTFTConfig.clicked.connect(self.__dbController.saveTftConfiguration)
+        
     
     def showAddDeviceDialog(self):
        

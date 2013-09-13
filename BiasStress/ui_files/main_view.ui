@@ -1088,7 +1088,7 @@
        <rect>
         <x>10</x>
         <y>10</y>
-        <width>401</width>
+        <width>321</width>
         <height>211</height>
        </rect>
       </property>
@@ -1153,7 +1153,7 @@
         <rect>
          <x>10</x>
          <y>160</y>
-         <width>381</width>
+         <width>301</width>
          <height>31</height>
         </rect>
        </property>
@@ -1219,7 +1219,7 @@
      <widget class="QGroupBox" name="groupBox_9">
       <property name="geometry">
        <rect>
-        <x>420</x>
+        <x>340</x>
         <y>10</y>
         <width>241</width>
         <height>211</height>
@@ -1314,6 +1314,55 @@
        <property name="text">
         <string>RESET DEFAULTS</string>
        </property>
+      </widget>
+     </widget>
+     <widget class="QGroupBox" name="groupBox_11">
+      <property name="geometry">
+       <rect>
+        <x>600</x>
+        <y>10</y>
+        <width>191</width>
+        <height>211</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Current TFT</string>
+      </property>
+      <widget class="QWidget" name="formLayoutWidget_10">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>20</y>
+         <width>171</width>
+         <height>80</height>
+        </rect>
+       </property>
+       <layout class="QFormLayout" name="formLayout_10">
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_25">
+          <property name="text">
+           <string>NUMBER</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QSpinBox" name="tft_number"/>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_26">
+          <property name="text">
+           <string>LOCATION</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QLineEdit" name="tft_location">
+          <property name="placeholderText">
+           <string>ie. J6</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </widget>
      </widget>
     </widget>
@@ -1629,9 +1678,22 @@
     <property name="title">
      <string>File...</string>
     </property>
+    <addaction name="actionSave_Log"/>
+    <addaction name="actionCreate_Database"/>
+    <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
+   <widget class="QMenu" name="menuDevice">
+    <property name="title">
+     <string>Actions</string>
+    </property>
+    <addaction name="actionMenuAddDevice"/>
+    <addaction name="actionImport_Script"/>
+    <addaction name="actionOpen_Database"/>
+    <addaction name="actionCreate_Wafer"/>
+   </widget>
    <addaction name="menuQuit"/>
+   <addaction name="menuDevice"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionQuit">
@@ -1643,6 +1705,36 @@
    </property>
    <property name="priority">
     <enum>QAction::HighPriority</enum>
+   </property>
+  </action>
+  <action name="actionSave_Log">
+   <property name="text">
+    <string>Save Log</string>
+   </property>
+  </action>
+  <action name="actionMenuAddDevice">
+   <property name="text">
+    <string>Add Device ...</string>
+   </property>
+  </action>
+  <action name="actionImport_Script">
+   <property name="text">
+    <string>Import Script ...</string>
+   </property>
+  </action>
+  <action name="actionOpen_Database">
+   <property name="text">
+    <string>Open Database ...</string>
+   </property>
+  </action>
+  <action name="actionCreate_Database">
+   <property name="text">
+    <string>Create Database</string>
+   </property>
+  </action>
+  <action name="actionCreate_Wafer">
+   <property name="text">
+    <string>Create Wafer ...</string>
    </property>
   </action>
  </widget>

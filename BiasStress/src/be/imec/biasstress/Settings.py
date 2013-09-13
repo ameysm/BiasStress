@@ -17,6 +17,16 @@ class SettingsParser(object):
         self.parseConstants()
         self.parseDefaultDevices()
         self.parseBiasConfig()
+        self.parseAppConstants()
+    
+    def parseAppConstants(self):
+        self.__app_constants = dict()
+        configList = self.__xmldoc.getElementsByTagName('app-constant')
+        for c in configList:
+            self.__app_constants[c.attributes['name'].value] =c.attributes['value'].value 
+    
+    def getAppConstant(self,name):
+        return self.__app_constants[name]
     
     def parseBiasConfig(self):
         self.__biasconfig = dict()

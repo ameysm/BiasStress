@@ -9,7 +9,7 @@ from threading import Thread
 from be.imec.biasstress.Settings import TFTCharacteristic
 from util import Toolbox
 from visa import VisaIOError
-
+from models import Data
 '''
 Created on Sep 5, 2013
 
@@ -224,6 +224,7 @@ class BiasController():
         self.performBias()
 
     def performBias(self):
+        datadict = dict()
         self.runActive = True
         self.__ui.actionBiasRun.setEnabled(False)
         self.__ui.actionAbortBiasStress.setEnabled(True)
@@ -236,9 +237,10 @@ class BiasController():
             self.__logger.log(Logger.ERROR,"Three devices should be connected to the three different nodes before a bias run can be executed.")
             return
         
-        drainDevice.set_output_volts(0)
+        drainDevice.set_output_volts(1)
         drainDevice.set_output_on()
-        
+        sourceDevice.set_output_volts(0)
+        sourceDevice.set_output_on()
         self.__plotcontroller.clearPlot()
         tijd_lijst = Toolbox.makeTime(0, self.totaltime, self.nrDecades)
         self.__logger.log(Logger.INFO,'Stress times: '+' - '.join([str(x) for x in tijd_lijst]))
@@ -270,12 +272,12 @@ class BiasController():
             
             gate_smu = gateDevice.getScriptSyntax()
             drain_smu = drainDevice.getScriptSyntax()
-            vgs, igs, ids = self.__tftcontroller.performSweep(gateDevice,drainDevice,gate_smu,drain_smu,self.start, self.end,self.drain,self.step,False)
+            vgs, igs, ids = self.__tftcontroller.performSweep(gateDevice,drainDevice,gate_smu,drain_smu,self.start, self.stop,1,self.step,False)
             self.__logger.log(Logger.INFO,'Sweep on timestamp %d sec - done' % (tijd_lijst[t]))
             self.__plotcontroller.plotIV_bias(ids,vgs)
             gateDevice.set_output_on()
             drainDevice.set_output_on()
-            
+            datadict[str(tijd_lijst[t])] = Data.BiasPacket(igs, ids, vgs)
             #Apply Bias
             gateDevice.set_output_volts(self.gate_bias)
             drainDevice.set_output_volts(self.drain_bias)
@@ -284,17 +286,21 @@ class BiasController():
         gateDevice.set_output_off()
         drainDevice.set_output_off()
         self.__logger.log(Logger.INFO, 'Bias run completed in %d sec' %(end_time - init_time))
+        direction = "negative"
+        if self.__ui.positiveBiasDirection.isChecked() == True:
+            direction = "positive"
+        DataWriter.writeBiasFile(datadict, direction, self.totaltime, "BIAS_RUN.txt")
         self.resetBias()
-        self.runActive = False
     
     def resetBias(self):
+        self.runActive = False
         self.__ui.tftwidget.setEnabled(True)
         self.__ui.actionBiasRun.setEnabled(True)
         self.__ui.actionAbortBiasStress.setEnabled(False)
         self.totalpbar.reset()
         self.__ui.currentCycleStatus.setText("")
         self.crono = None
-        
+import DataWriter     
 class Crono(QtCore.QObject):
     
     tick = QtCore.pyqtSignal(int, name="changed")
@@ -723,3 +729,25 @@ class DatabaseController(object):
             self.__currentConnection.close()
             return tftConfigs
         return tftConfigs
+
+class WaferController(object):
+    
+    def __init__(self,logger,current_work_dir):
+        self.__current_work_dir = current_work_dir
+        self.__current_wafer = None
+        self.__wafer = []
+        self.__logger = logger
+    def getCurrentWorkingDir(self):
+        return self.__current_work_dir
+    
+    def getCurrentWafer(self):
+        return self.__current_wafer
+    
+    def setCurrentWafer(self,wafer):
+        self.__current_wafer = wafer
+        self.__logger.log(Logger.INFO,"current working wafer is set to : "+self.getCurrentWafer().getWaferName())
+    
+    def addWafer(self,wafer):
+        self.__wafer.append(wafer)
+    
+    

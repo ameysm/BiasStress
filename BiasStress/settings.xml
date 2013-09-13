@@ -24,4 +24,7 @@
 		<bias-parameter name="default-total-stress-time" value="10000"/>
 		<bias-parameter name="default-decades" value="4" />
 	</bias-parameters>
+	<application-constants>
+		<app-constant name="working_dir" value="C://BIAS_DATA/"/>
+	</application-constants>
 </settings>
