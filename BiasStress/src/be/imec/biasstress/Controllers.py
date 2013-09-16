@@ -10,6 +10,7 @@ from be.imec.biasstress.Settings import TFTCharacteristic
 from util import Toolbox
 from visa import VisaIOError
 from models import Data
+from pylab import savefig
 '''
 Created on Sep 5, 2013
 
@@ -50,7 +51,7 @@ class TFTController(AbstractController):
     def addCharacteristics(self,chars):
         self.__characteristics = chars+self.__characteristics
         self.loadCharacteristics()
-    
+        
     def loadCharacteristics(self):
         self.__ui.oxideCombo.clear()
         availableoxides = []
@@ -180,12 +181,13 @@ This class controls every aspect of managing the BIAS tabwidget and
 '''  
 import time      
 class BiasController():
-    def __init__(self,ui,logger,tftcontroller,devicecontroller,plotcontroller):
+    def __init__(self,ui,logger,tftcontroller,devicecontroller,plotcontroller,wafercontroller):
         self.__ui = ui
         self.__logger = logger
         self.__devicecontroller = devicecontroller
         self.__plotcontroller = plotcontroller
         self.__tftcontroller = tftcontroller
+        self.__wafercontroller = wafercontroller
         self.__ui.bias.setEnabled(True)
         self.__ui.actionAbortBiasStress.setEnabled(False)
         self.registerBiasFunctions()
@@ -289,9 +291,27 @@ class BiasController():
         direction = "negative"
         if self.__ui.positiveBiasDirection.isChecked() == True:
             direction = "positive"
-        DataWriter.writeBiasFile(datadict, direction, self.totaltime, "BIAS_RUN.txt")
+        base_name = self.construct_filename()
+        DataWriter.writeBiasFile(datadict, direction, self.totaltime, self.__wafercontroller.get_current_wafer_dir()+"/"+base_name+".bias")
+        self.__plotcontroller.saveCurrentPlot(self.__wafercontroller.get_current_wafer_dir()+"/"+base_name+".png")
         self.resetBias()
     
+    def construct_filename(self):
+        
+        tft_number = str(self.__ui.tft_number.text())
+        tft_loc = str(self.__ui.tft_location.text())
+        
+        if tft_number.strip() == "" or tft_loc.strip() == "":
+            self.__logger.log(Logger.ERROR,"TFT Number and TFT Location can not be empty. The current bias data will be saved as 'default_data.bias' in the current working dir.")
+            return "default_data"
+        try:
+            float(tft_number)
+        except ValueError:
+            self.__logger.log(Logger.ERROR,"TFT Number can only be numerical. The current bias data will be saved as 'default_data.bias' in the current working directory.")
+            return "default_data"
+       
+        return "BIAS_TFT_"+tft_number+"_"+tft_loc
+            
     def resetBias(self):
         self.runActive = False
         self.__ui.tftwidget.setEnabled(True)
@@ -654,6 +674,9 @@ class PlotController(object):
         self.__plotWidget.canvas.ax.set_yscale('log')
         self.__plotWidget.canvas.ax.plot(V,Id,'g',label='I_ds')
         self.__plotWidget.canvas.draw()
+    
+    def saveCurrentPlot(self,savepath):
+        savefig(savepath, bbox_inches=0)
         
 '''
 This class acts as a layer to the connected database. Every database operation should be implemented here.
@@ -751,5 +774,11 @@ class WaferController(object):
     
     def addWafer(self,wafer):
         self.__wafer.append(wafer)
+    
+    def get_current_wafer_dir(self):
+        if self.__current_wafer == None:
+            return None
+        
+        return self.__current_work_dir+self.__current_wafer.get_relative_wafer_dir()
     
     

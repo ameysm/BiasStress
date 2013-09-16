@@ -23,6 +23,9 @@ class Wafer(object):
     def get_proc_step(self):
         return str(self.__proc_step)
     
+    def get_relative_wafer_dir(self):
+        return self.get_date_code()+"/"+self.get_index()+"/"
+    
     '''
     For example : PEMD
     '''

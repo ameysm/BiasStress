@@ -41,9 +41,10 @@ class BiasStress(QtGui.QMainWindow):
             self.__plotController = PlotController(self.ui.plotWidget)
             self.__tftController = TFTController(self.__deviceController,self.ui,self.__logger,self.__plotController,self.__settingsParser.getTFTCharacteristics(),self.__settingsParser.getDefaultTFTNodeValues())
             self.__dbController = DatabaseController(self.ui,self.__logger,self.__tftController)
-            self.__biasController = BiasController(self.ui,self.__logger,self.__tftController,self.__deviceController,self.__plotController)
+            self.__biasController = BiasController(self.ui,self.__logger,self.__tftController,self.__deviceController,self.__plotController,self.__waferController)
             self.initialize_gui()
             self.showWaferWizard()
+            self.ui.currentDirStatus.setText(self.__waferController.get_current_wafer_dir())
         except IOError:
             QtGui.QMessageBox.warning(None, QtCore.QString('Error settings'), 'The settings file is either missing or has the wrong syntax. Please ensure there is a file "settings.xml" present in the root directory of this application. Aborting.')
             sys.exit()
@@ -52,7 +53,7 @@ class BiasStress(QtGui.QMainWindow):
             sys.exit()
     
     def showWaferWizard(self):
-        dialog = WaferDialog(self, self.__waferController, self.__logger)
+        dialog = WaferDialog(self, self.__waferController, self.__logger,self.__working_dir)
         dialog.exec_()
 
     def checkWorkingDir(self,d):

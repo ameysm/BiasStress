@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'main_view.ui'
 #
-# Created: Fri Sep 13 15:28:44 2013
+# Created: Mon Sep 16 09:48:05 2013
 #      by: PyQt4 UI code generator 4.9.6
 #
 # WARNING! All changes made in this file will be lost!
@@ -658,6 +658,20 @@ class Ui_MainWindow(object):
         self.actionNewDb = QtGui.QPushButton(self.horizontalLayoutWidget_4)
         self.actionNewDb.setObjectName(_fromUtf8("actionNewDb"))
         self.horizontalLayout_4.addWidget(self.actionNewDb)
+        self.formLayoutWidget_11 = QtGui.QWidget(self.centralwidget)
+        self.formLayoutWidget_11.setGeometry(QtCore.QRect(970, 10, 421, 41))
+        self.formLayoutWidget_11.setObjectName(_fromUtf8("formLayoutWidget_11"))
+        self.formLayout_11 = QtGui.QFormLayout(self.formLayoutWidget_11)
+        self.formLayout_11.setMargin(0)
+        self.formLayout_11.setObjectName(_fromUtf8("formLayout_11"))
+        self.label_27 = QtGui.QLabel(self.formLayoutWidget_11)
+        self.label_27.setStyleSheet(_fromUtf8("font: 75 12pt \"MS Shell Dlg 2\";"))
+        self.label_27.setObjectName(_fromUtf8("label_27"))
+        self.formLayout_11.setWidget(0, QtGui.QFormLayout.LabelRole, self.label_27)
+        self.currentDirStatus = QtGui.QLineEdit(self.formLayoutWidget_11)
+        self.currentDirStatus.setReadOnly(True)
+        self.currentDirStatus.setObjectName(_fromUtf8("currentDirStatus"))
+        self.formLayout_11.setWidget(0, QtGui.QFormLayout.FieldRole, self.currentDirStatus)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1413, 21))
@@ -796,6 +810,7 @@ class Ui_MainWindow(object):
         self.database_status_text.setText(_translate("MainWindow", "No working database is selected", None))
         self.actionOpenDatabase.setText(_translate("MainWindow", "Open working database", None))
         self.actionNewDb.setText(_translate("MainWindow", "Create new ...", None))
+        self.label_27.setText(_translate("MainWindow", "CURRENT WORKING DIR", None))
         self.menuQuit.setTitle(_translate("MainWindow", "File...", None))
         self.menuDevice.setTitle(_translate("MainWindow", "Actions", None))
         self.actionQuit.setText(_translate("MainWindow", "Quit", None))
