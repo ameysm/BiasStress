@@ -32,6 +32,7 @@ class ScriptLoaderDialog(QDialog):
             self.dialog.tableWidget.setItem(x,0,QtGui.QTableWidgetItem(address))
             device = self.__devicecontroller.getDevicesOnAdress(address)[0]
             self.dialog.tableWidget.setItem(x,1,QtGui.QTableWidgetItem(device.getName()))
+            x=x+1
     
     def okClicked(self):
         selectionModel = self.dialog.tableWidget.selectionModel()

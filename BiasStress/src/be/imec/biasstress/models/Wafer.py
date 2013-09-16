@@ -1,7 +1,9 @@
 '''
 Created on Sep 13, 2013
 
-@author: adminssteudel
+This class represents a wafer.
+
+@author: Incalza Dario
 '''
 
 class Wafer(object):

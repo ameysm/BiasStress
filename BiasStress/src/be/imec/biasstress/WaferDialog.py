@@ -1,7 +1,9 @@
 '''
 Created on Sep 13, 2013
 
-@author: adminssteudel
+This dialog enbles the user to create a new wafer and start measurements for it.
+
+@author: Incqlza Dario
 '''
 from PyQt4.QtGui import QDialog
 from PyQt4 import QtGui,QtCore

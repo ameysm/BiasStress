@@ -729,7 +729,9 @@ class DatabaseController(object):
             self.__currentConnection.close()
             return tftConfigs
         return tftConfigs
-
+'''
+This class controls and manages all the wafers in this application.
+'''
 class WaferController(object):
     
     def __init__(self,logger,current_work_dir):

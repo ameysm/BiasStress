@@ -1,7 +1,9 @@
 '''
 Created on Sep 13, 2013
 
-@author: adminssteudel
+This class represents a packet with Biasdata. 
+
+@author: Incalza Dario
 '''
 
 class BiasPacket(object):

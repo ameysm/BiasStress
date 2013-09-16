@@ -1,7 +1,9 @@
 '''
 Created on Sep 13, 2013
 
-@author: adminssteudel
+Initial iteration of a TSP Editor
+
+@author: Incalza Dario
 '''
 from PyQt4 import Qsci,QtGui,QtCore
 import sys

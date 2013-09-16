@@ -12,7 +12,12 @@ dictdata["56"]= numpy.random.randint(5,size=(100,3))
 dictdata["100"]= numpy.random.randint(5,size=(100,3))
 direction = "positive"
 
-
+'''
+This function enables us to write bias data to a file.
+@param dictdata: is a dictionary structure with timestamps of sweeps as key and a biaspacket containing the measurement data as value
+@param total_stress: is the total_stress time that was used to measure the TFT
+@param filename: A given filename under which the file should be saved
+'''
 def writeBiasFile(dictdata,direction,total_stress,filename):
     completeName = filename
     file1 = open(completeName,"w")
