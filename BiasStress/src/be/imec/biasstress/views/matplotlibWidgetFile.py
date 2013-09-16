@@ -14,11 +14,12 @@ class MplCanvas(FigureCanvas):
     def __init__(self):
         self.fig = Figure()
         self.ax = self.fig.add_subplot(111)
- 
         FigureCanvas.__init__(self, self.fig)
         FigureCanvas.setSizePolicy(self, QtGui.QSizePolicy.Expanding,QtGui.QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
- 
+    
+    def getFig(self):
+        return self.fig
  
 class matplotlibWidget(QtGui.QWidget):
  

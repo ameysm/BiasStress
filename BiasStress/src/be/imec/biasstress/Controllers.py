@@ -40,13 +40,13 @@ class TFTController(AbstractController):
         self.DEFAULT_VDS= defaultnodevalues[3]
         self.DEFAULT_STEP = defaultnodevalues[2]
         self.__ui=ui
-        #self.__ui.tftwidget.setEnabled(False)
+        self.loadCharacteristics()
         self.__currentTft = TFT(defaultnodevalues)
         self.__logger=logger
         self.__plotcontroller=plotcontroller
         self.setTFTValues()
         self.__characteristics = characteristics
-        self.loadCharacteristics()
+        
     
     def addCharacteristics(self,chars):
         self.__characteristics = chars+self.__characteristics
@@ -95,7 +95,7 @@ class TFTController(AbstractController):
         self.__ui.step.setText(self.__currentTft.getStep())
     
 
-    def performSweep(self, gateDevice, drainDevice, gate_smu, drain_smu, start, stop, drain,step,boolBackwards=False):
+    def performSweep(self, gateDevice, drainDevice, gate_smu, drain_smu, start, stop, drain,step,boolBackwards):
         gateDevice.reset()
         drainDevice.reset()
         gateDevice.clear_buffer()
@@ -159,7 +159,7 @@ class TFTController(AbstractController):
         step = float(self.__ui.step.text())
         drain = float(self.__ui.vds.text())
             
-        vgs, igs, ids = self.performSweep(gateDevice, drainDevice, gate_smu, drain_smu, start, stop, step,False)
+        vgs, igs, ids = self.performSweep(gateDevice, drainDevice, gate_smu, drain_smu, start, stop,drain, step,False)
         boolFWBW = self.__ui.boolFWBW.isChecked()
     
         if boolFWBW:
@@ -636,6 +636,7 @@ class ScriptController(object):
 '''
 This class is capable of plotting data in the plotwidget
 '''        
+import matplotlib.pyplot as plt
 class PlotController(object):
 
     def __init__(self,plotWidget):
@@ -643,13 +644,13 @@ class PlotController(object):
         
     def PlotFunc(self):
         self.clearPlot()
-        t = Thread(target=self.plotIV,args=([10,100,1000,-100000,100000000],[100,100,100,-100,100],[1,2,3,4,5],))
-        t.start()
+        self.plotIV('C://Users//adminssteudel//Desktop//test.png',[10,100,1000,-100000,100000000],[100,100,100,-100,100],[1,2,3,4,5])
     
     def clearPlot(self):
         self.__plotWidget.canvas.ax.cla()
     
-    def plotIV(self,Id,Ig,V,Id_back=None,Ig_back=None,Vg_back = None):
+    def plotIV(self,savepath,Id,Ig,V,Id_back=None,Ig_back=None,Vg_back = None):
+        self.fig = plt.figure()
         Id = [abs(float(x)) for x in Id]
         Ig = [abs(float(x)) for x in Ig]
         self.__plotWidget.canvas.ax.set_title("I-V Curve")
@@ -666,7 +667,7 @@ class PlotController(object):
         legend = self.__plotWidget.canvas.ax.legend(loc='upper left', shadow=True)
         self.__plotWidget.canvas.draw()
     
-    def plotIV_bias(self,Id,V):
+    def plotIV_bias(self,Id,V,savepath):
         Id = [abs(float(x)) for x in Id]
         self.__plotWidget.canvas.ax.set_title("I-V Curve")
         self.__plotWidget.canvas.ax.set_xlabel("V_gate")
@@ -676,8 +677,9 @@ class PlotController(object):
         self.__plotWidget.canvas.draw()
     
     def saveCurrentPlot(self,savepath):
-        savefig(savepath, bbox_inches=0)
-        
+        self.__plotWidget.canvas.getFig().savefig(savepath,dpi=150)
+    
+    
 '''
 This class acts as a layer to the connected database. Every database operation should be implemented here.
 On runtime every db operation should be routed through this controller.
