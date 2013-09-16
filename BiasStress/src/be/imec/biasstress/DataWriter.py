@@ -28,7 +28,7 @@ def writeBiasFile(extrainfo,dictdata,direction,total_stress,filename):
     file1.write("[DATA-SCHEME = DRAIN CURRENT \t GATE CURRENT \t GATE VOLTAGE]\n")
     file1.write("[DATA-START DIRECTION='"+str(direction)+' TOTAL STRESS= '+str(total_stress)+']'+"\n")
     for key in dictdata:
-        file1.write("[SWEEP ON T="+key+"]"+"\n")
+        file1.write("[SWEEP ON T= "+key+" ]"+"\n")
         biasdata = dictdata[key]
         d = biasdata.getDrainList()
         g = biasdata.getGateList()

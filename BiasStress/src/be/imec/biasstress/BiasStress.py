@@ -43,7 +43,6 @@ class BiasStress(QtGui.QMainWindow):
             self.__dbController = DatabaseController(self.ui,self.__logger,self.__tftController)
             self.__biasController = BiasController(self.ui,self.__logger,self.__tftController,self.__deviceController,self.__plotController,self.__waferController)
             self.initialize_gui()
-            self.showWaferWizard()
             
         except IOError:
             QtGui.QMessageBox.warning(None, QtCore.QString('Error settings'), 'The settings file is either missing or has the wrong syntax. Please ensure there is a file "settings.xml" present in the root directory of this application. Aborting.')
