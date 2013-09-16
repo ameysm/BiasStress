@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'main_view.ui'
 #
-# Created: Mon Sep 16 09:48:05 2013
+# Created: Mon Sep 16 14:43:46 2013
 #      by: PyQt4 UI code generator 4.9.6
 #
 # WARNING! All changes made in this file will be lost!
@@ -487,7 +487,7 @@ class Ui_MainWindow(object):
         self.label_19.setGeometry(QtCore.QRect(10, 140, 111, 16))
         self.label_19.setObjectName(_fromUtf8("label_19"))
         self.currentCycleStatus = QtGui.QLabel(self.groupBox_5)
-        self.currentCycleStatus.setGeometry(QtCore.QRect(120, 140, 231, 20))
+        self.currentCycleStatus.setGeometry(QtCore.QRect(120, 140, 191, 20))
         self.currentCycleStatus.setText(_fromUtf8(""))
         self.currentCycleStatus.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.currentCycleStatus.setWordWrap(True)

@@ -40,13 +40,12 @@ class TFTController(AbstractController):
         self.DEFAULT_VDS= defaultnodevalues[3]
         self.DEFAULT_STEP = defaultnodevalues[2]
         self.__ui=ui
-        self.loadCharacteristics()
         self.__currentTft = TFT(defaultnodevalues)
         self.__logger=logger
         self.__plotcontroller=plotcontroller
         self.setTFTValues()
         self.__characteristics = characteristics
-        
+        self.loadCharacteristics()
     
     def addCharacteristics(self,chars):
         self.__characteristics = chars+self.__characteristics
@@ -165,7 +164,6 @@ class TFTController(AbstractController):
         if boolFWBW:
             vgs_back,igs_back,ids_back = self.performSweep(gateDevice, drainDevice, gate_smu, drain_smu, stop, start,drain, step,True)
             t = Thread(target=self.__plotcontroller.plotIV,args=(ids, igs, vgs,ids_back,igs_back,vgs_back,))
-            #self.__plotcontroller.plotIV(ids, igs, vgs,ids_back,igs_back,vgs_back)
             t.start()
             self.__logger.log(Logger.INFO,"Data for forward and backward sweep is being plotted")
         
@@ -173,7 +171,6 @@ class TFTController(AbstractController):
         else:
             t = Thread(target=self.__plotcontroller.plotIV,args=(ids, igs, vgs,))
             t.start()
-            #self.__plotcontroller.plotIV(ids, igs, vgs)
             self.__logger.log(Logger.INFO,"Data for forward sweep is being plotted")
             return vgs, igs, ids
 '''
@@ -205,6 +202,9 @@ class BiasController():
             if reply == QtGui.QMessageBox.Yes:
                 self.runActive = False
                 self.crono.abort()
+                self.__plotcontroller.clearPlot()
+                for device in self.__devicecontroller.getAllDevices():
+                    device.set_output_off()
             else:
                 return
             
@@ -226,6 +226,7 @@ class BiasController():
         self.performBias()
 
     def performBias(self):
+        extrainfo = dict()
         datadict = dict()
         self.runActive = True
         self.__ui.actionBiasRun.setEnabled(False)
@@ -249,6 +250,14 @@ class BiasController():
         self.__logger.log(Logger.INFO,'Starting Bias run with gate bias stress : %g V and drain stress : %d V'%(self.gate_bias,self.drain_bias))
         self.totalpbar.setMinimum(0)
         self.totalpbar.setMaximum(self.totaltime)
+        extrainfo['total time'] = str(self.totaltime)+" s"
+        extrainfo['number of decades']=str(self.nrDecades)
+        extrainfo['stress times'] = ' - '.join([str(x) for x in tijd_lijst])
+        extrainfo['gate bias stress'] = str(self.gate_bias)+" V"
+        extrainfo['drain bias stress'] = str(self.drain_bias)+" V"
+        extrainfo['sweep gate start'] = str(self.start)+" V"
+        extrainfo['sweep gate end'] = str(self.stop)+" V"
+        extrainfo['sweep drain'] = str(self.tft_drain)+" V"
         init_time = time.time()
         for t in range(0, len(tijd_lijst)):
             QtGui.QApplication.processEvents()
@@ -292,7 +301,7 @@ class BiasController():
         if self.__ui.positiveBiasDirection.isChecked() == True:
             direction = "positive"
         base_name = self.construct_filename()
-        DataWriter.writeBiasFile(datadict, direction, self.totaltime, self.__wafercontroller.get_current_wafer_dir()+"/"+base_name+".bias")
+        DataWriter.writeBiasFile(extrainfo,datadict, direction, self.totaltime, self.__wafercontroller.get_current_wafer_dir()+"/"+base_name+".bias")
         self.__plotcontroller.saveCurrentPlot(self.__wafercontroller.get_current_wafer_dir()+"/"+base_name+".png")
         self.resetBias()
     
@@ -320,6 +329,9 @@ class BiasController():
         self.totalpbar.reset()
         self.__ui.currentCycleStatus.setText("")
         self.crono = None
+        for device in self.__devicecontroller.getAllDevices():
+            device.set_output_off()
+            device.reset()
 import DataWriter     
 class Crono(QtCore.QObject):
     
@@ -649,7 +661,7 @@ class PlotController(object):
     def clearPlot(self):
         self.__plotWidget.canvas.ax.cla()
     
-    def plotIV(self,savepath,Id,Ig,V,Id_back=None,Ig_back=None,Vg_back = None):
+    def plotIV(self,Id,Ig,V,Id_back=None,Ig_back=None,Vg_back = None):
         self.fig = plt.figure()
         Id = [abs(float(x)) for x in Id]
         Ig = [abs(float(x)) for x in Ig]
@@ -667,7 +679,7 @@ class PlotController(object):
         legend = self.__plotWidget.canvas.ax.legend(loc='upper left', shadow=True)
         self.__plotWidget.canvas.draw()
     
-    def plotIV_bias(self,Id,V,savepath):
+    def plotIV_bias(self,Id,V):
         Id = [abs(float(x)) for x in Id]
         self.__plotWidget.canvas.ax.set_title("I-V Curve")
         self.__plotWidget.canvas.ax.set_xlabel("V_gate")
@@ -677,7 +689,7 @@ class PlotController(object):
         self.__plotWidget.canvas.draw()
     
     def saveCurrentPlot(self,savepath):
-        self.__plotWidget.canvas.getFig().savefig(savepath,dpi=150)
+        self.__plotWidget.canvas.getFig().savefig(savepath,dpi=300)
     
     
 '''

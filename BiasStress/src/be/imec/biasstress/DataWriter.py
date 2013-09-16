@@ -18,9 +18,13 @@ This function enables us to write bias data to a file.
 @param total_stress: is the total_stress time that was used to measure the TFT
 @param filename: A given filename under which the file should be saved
 '''
-def writeBiasFile(dictdata,direction,total_stress,filename):
+def writeBiasFile(extrainfo,dictdata,direction,total_stress,filename):
     completeName = filename
     file1 = open(completeName,"w")
+    file1.write("##################### EXTRA INFO ########################\n")
+    for key in extrainfo:
+        file1.write(key+" = "+extrainfo[key]+"\n")
+    file1.write("################### END EXTRA INFO ######################\n")
     file1.write("[DATA-SCHEME = DRAIN CURRENT \t GATE CURRENT \t GATE VOLTAGE]\n")
     file1.write("[DATA-START DIRECTION='"+str(direction)+' TOTAL STRESS= '+str(total_stress)+']'+"\n")
     for key in dictdata:
