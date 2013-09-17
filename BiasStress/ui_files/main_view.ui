@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1413</width>
-    <height>794</height>
+    <width>1196</width>
+    <height>757</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -25,8 +25,8 @@
      <rect>
       <x>10</x>
       <y>300</y>
-      <width>571</width>
-      <height>451</height>
+      <width>491</width>
+      <height>411</height>
      </rect>
     </property>
     <property name="sizePolicy">
@@ -42,8 +42,8 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>20</y>
-       <width>551</width>
+       <y>70</y>
+       <width>471</width>
        <height>291</height>
       </rect>
      </property>
@@ -476,9 +476,9 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>310</y>
-       <width>551</width>
-       <height>81</height>
+       <y>370</y>
+       <width>471</width>
+       <height>31</height>
       </rect>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout">
@@ -498,13 +498,42 @@
       </item>
      </layout>
     </widget>
+    <widget class="QWidget" name="formLayoutWidget_11">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>20</y>
+       <width>471</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <layout class="QFormLayout" name="formLayout_11">
+      <item row="1" column="1">
+       <widget class="QLineEdit" name="currentDirStatus">
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_27">
+        <property name="styleSheet">
+         <string notr="true">font: 75 12pt &quot;MS Shell Dlg 2&quot;;</string>
+        </property>
+        <property name="text">
+         <string>CURRENT WORKING DIR</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
    </widget>
    <widget class="QTabWidget" name="tabWidget">
     <property name="geometry">
      <rect>
-      <x>590</x>
+      <x>510</x>
       <y>40</y>
-      <width>811</width>
+      <width>661</width>
       <height>261</height>
      </rect>
     </property>
@@ -1088,7 +1117,7 @@
        <rect>
         <x>10</x>
         <y>10</y>
-        <width>321</width>
+        <width>241</width>
         <height>211</height>
        </rect>
       </property>
@@ -1153,8 +1182,8 @@
         <rect>
          <x>10</x>
          <y>160</y>
-         <width>301</width>
-         <height>31</height>
+         <width>221</width>
+         <height>42</height>
         </rect>
        </property>
        <layout class="QFormLayout" name="formLayout_8">
@@ -1168,7 +1197,7 @@
           </property>
          </widget>
         </item>
-        <item row="0" column="1">
+        <item row="1" column="0" colspan="2">
          <widget class="QProgressBar" name="totaltime_run">
           <property name="value">
            <number>0</number>
@@ -1198,7 +1227,7 @@
         <rect>
          <x>120</x>
          <y>140</y>
-         <width>231</width>
+         <width>111</width>
          <height>20</height>
         </rect>
        </property>
@@ -1219,7 +1248,7 @@
      <widget class="QGroupBox" name="groupBox_9">
       <property name="geometry">
        <rect>
-        <x>340</x>
+        <x>260</x>
         <y>10</y>
         <width>241</width>
         <height>211</height>
@@ -1319,9 +1348,9 @@
      <widget class="QGroupBox" name="groupBox_11">
       <property name="geometry">
        <rect>
-        <x>600</x>
+        <x>510</x>
         <y>10</y>
-        <width>191</width>
+        <width>141</width>
         <height>211</height>
        </rect>
       </property>
@@ -1333,7 +1362,7 @@
         <rect>
          <x>10</x>
          <y>20</y>
-         <width>171</width>
+         <width>121</width>
          <height>80</height>
         </rect>
        </property>
@@ -1503,7 +1532,7 @@
      <rect>
       <x>10</x>
       <y>40</y>
-      <width>571</width>
+      <width>491</width>
       <height>261</height>
      </rect>
     </property>
@@ -1515,7 +1544,7 @@
       <rect>
        <x>10</x>
        <y>20</y>
-       <width>401</width>
+       <width>351</width>
        <height>241</height>
       </rect>
      </property>
@@ -1561,9 +1590,9 @@
     <widget class="QWidget" name="verticalLayoutWidget">
      <property name="geometry">
       <rect>
-       <x>430</x>
+       <x>370</x>
        <y>20</y>
-       <width>121</width>
+       <width>111</width>
        <height>83</height>
       </rect>
      </property>
@@ -1595,10 +1624,10 @@
    <widget class="QGroupBox" name="groupBox_4">
     <property name="geometry">
      <rect>
-      <x>590</x>
+      <x>510</x>
       <y>300</y>
-      <width>811</width>
-      <height>451</height>
+      <width>661</width>
+      <height>411</height>
      </rect>
     </property>
     <property name="title">
@@ -1609,8 +1638,8 @@
       <rect>
        <x>10</x>
        <y>20</y>
-       <width>791</width>
-       <height>441</height>
+       <width>641</width>
+       <height>371</height>
       </rect>
      </property>
     </widget>
@@ -1670,7 +1699,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1413</width>
+     <width>1196</width>
      <height>21</height>
     </rect>
    </property>
