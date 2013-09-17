@@ -1,15 +1,15 @@
-from be.imec.biasstress.models.TFT import TFT
-from be.imec.biasstress.util.Logger import Logger
+from TFT import TFT
+from Logger import Logger
 from PyQt4 import QtCore,QtGui
-from be.imec.biasstress.util.Toolbox import isANumber
-from be.imec.biasstress.ScriptLoaderDialog import ScriptLoaderDialog
+from Toolbox import isANumber
+from ScriptLoaderDialog import ScriptLoaderDialog
 import os,sqlite3,visa
-from hardware.SMU import SMU
+from SMU import SMU
 from threading import Thread
-from be.imec.biasstress.Settings import TFTCharacteristic
-from util import Toolbox
+from Settings import TFTCharacteristic
+import Toolbox
 from visa import VisaIOError
-from models import Data
+import Data
 from pylab import savefig
 '''
 Created on Sep 5, 2013

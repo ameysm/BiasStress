@@ -10,7 +10,7 @@ This class is responsible for parsing the settings.xml file.
 class SettingsParser(object):
     
     def __init__(self):
-        self.__xmldoc = minidom.parse('../../../../settings.xml')
+        self.__xmldoc = minidom.parse('settings.xml')
     
     def parse(self):
         self.parseTftCharacteristics()

@@ -7,8 +7,8 @@ This dialog will be shown when the user wants to upload a script to a particular
 '''
 from PyQt4.QtGui import QDialog
 from PyQt4 import QtGui
-from be.imec.biasstress.views.script_loader import Ui_ScriptLoader
-from util.Logger import Logger
+from script_loader import Ui_ScriptLoader
+from Logger import Logger
 class ScriptLoaderDialog(QDialog):
     
 

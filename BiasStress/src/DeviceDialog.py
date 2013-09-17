@@ -7,9 +7,9 @@ This class represents a dialog that enables the user to add an SMU device on a p
 '''
 from PyQt4 import QtGui,QtCore
 from PyQt4.QtGui import QDialog
-from views.view_add_device import Ui_addDeviceDialog
-from hardware.SMU import SMU
-from util.Logger import Logger
+from view_add_device import Ui_addDeviceDialog
+from SMU import SMU
+from Logger import Logger
 
 class DeviceDialog(QDialog):
    

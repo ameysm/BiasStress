@@ -7,10 +7,10 @@ This dialog enbles the user to create a new wafer and start measurements for it.
 '''
 from PyQt4.QtGui import QDialog
 from PyQt4 import QtGui,QtCore
-from be.imec.biasstress.views.wafer_dialog import Ui_Dialog 
+from wafer_dialog import Ui_Dialog 
 from datetime import datetime
 import os,errno
-from be.imec.biasstress.models.Wafer import Wafer
+from Wafer import Wafer
 class WaferDialog(QDialog):
     
 

@@ -6,12 +6,12 @@ This represents the main program window connecting the GUI to the backend logic,
 @author: Incalza Dario
 '''
 from PyQt4 import QtGui,QtCore
-from views.main_view import Ui_MainWindow
-from util.Logger import Logger
+from main_view import Ui_MainWindow
+from Logger import Logger
 from DeviceDialog import DeviceDialog
 from WaferDialog import WaferDialog
 import os
-from models.Script import Script
+from Script import Script
 from Controllers import TFTController,DeviceController,ComplianceController,PlotController,ScriptController,DatabaseController,BiasController,WaferController
 from Settings import SettingsParser
 import sys
