@@ -124,7 +124,8 @@ class TFTController(AbstractController):
         print readings
         igs = gateDevice.readBuffer('nvbuffer1', 1, readings)
         ids = drainDevice.readBuffer('nvbuffer1', 1, readings)
-        
+        gateDevice.set_output_volts(0)
+        drainDevice.set_output_volts(0)
         gateDevice.set_output_off()
         drainDevice.set_output_off()
        
