@@ -158,12 +158,23 @@ class TFTController(AbstractController):
         stop = int(self.__ui.vgend.text())
         step = float(self.__ui.step.text())
         drain = float(self.__ui.vds.text())
-            
-        vgs, igs, ids = self.performSweep(gateDevice, drainDevice, gate_smu, drain_smu, start, stop,drain, step,False)
+        try: 
+            vgs, igs, ids = self.performSweep(gateDevice, drainDevice, gate_smu, drain_smu, start, stop,drain, step,False)
+        except VisaIOError:
+            gateDevice.set_output_off()
+            drainDevice.set_output_off()
+            sourceDevice.set_output_off()
+            self.__logger.log(Logger.ERROR,"VisaIOError : Something went terribly wrong. Please check GPIB connections and restart.")
         boolFWBW = self.__ui.boolFWBW.isChecked()
     
         if boolFWBW:
-            vgs_back,igs_back,ids_back = self.performSweep(gateDevice, drainDevice, gate_smu, drain_smu, stop, start,drain, step,True)
+            try:
+                vgs_back,igs_back,ids_back = self.performSweep(gateDevice, drainDevice, gate_smu, drain_smu, stop, start,drain, step,True)
+            except VisaIOError:
+                gateDevice.set_output_off()
+                drainDevice.set_output_off()
+                sourceDevice.set_output_off()
+                self.__logger.log(Logger.ERROR,"VisaIOError : Something went terribly wrong. Please check GPIB connections and restart.")
             self.__plotcontroller.plotIV(ids, igs, vgs,ids_back,igs_back,vgs_back)
             self.__logger.log(Logger.INFO,"Data for forward and backward sweep is being plotted")
         
