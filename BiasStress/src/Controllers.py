@@ -163,14 +163,12 @@ class TFTController(AbstractController):
     
         if boolFWBW:
             vgs_back,igs_back,ids_back = self.performSweep(gateDevice, drainDevice, gate_smu, drain_smu, stop, start,drain, step,True)
-            t = Thread(target=self.__plotcontroller.plotIV,args=(ids, igs, vgs,ids_back,igs_back,vgs_back,))
-            t.start()
+            self.__plotcontroller.plotIV(ids, igs, vgs,ids_back,igs_back,vgs_back)
             self.__logger.log(Logger.INFO,"Data for forward and backward sweep is being plotted")
         
             return vgs,igs,ids,vgs_back,igs_back,ids_back
         else:
-            t = Thread(target=self.__plotcontroller.plotIV,args=(ids, igs, vgs,))
-            t.start()
+            self.__plotcontroller.plotIV(ids, igs, vgs)
             self.__logger.log(Logger.INFO,"Data for forward sweep is being plotted")
             return vgs, igs, ids
 '''
