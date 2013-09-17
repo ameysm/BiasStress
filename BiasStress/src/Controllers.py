@@ -165,6 +165,7 @@ class TFTController(AbstractController):
             drainDevice.set_output_off()
             sourceDevice.set_output_off()
             self.__logger.log(Logger.ERROR,"VisaIOError : Something went terribly wrong. Please check GPIB connections and restart.")
+            return
         boolFWBW = self.__ui.boolFWBW.isChecked()
     
         if boolFWBW:
@@ -175,6 +176,7 @@ class TFTController(AbstractController):
                 drainDevice.set_output_off()
                 sourceDevice.set_output_off()
                 self.__logger.log(Logger.ERROR,"VisaIOError : Something went terribly wrong. Please check GPIB connections and restart.")
+                return
             self.__plotcontroller.plotIV(ids, igs, vgs,ids_back,igs_back,vgs_back)
             self.__logger.log(Logger.INFO,"Data for forward and backward sweep is being plotted")
         
