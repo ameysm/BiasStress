@@ -209,6 +209,10 @@ class BiasController():
             
     
     def biasRun(self):
+        if self.__wafercontroller.get_current_wafer_dir() == None:
+            self.__logger.log(Logger.ERROR,"Create a wafer before performing a bias run ! Make sure the current working directory is not empty.")
+            return
+            
         try:
             self.nrDecades = int(self.__ui.samplesPerDecade.value())
             self.totaltime = float(str(self.__ui.totalTime.text()))
