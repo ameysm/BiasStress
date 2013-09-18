@@ -1,16 +1,8 @@
 '''
 Created on Sep 13, 2013
 
-@author: adminssteudel
+@author: Incalza Dario
 '''
-import numpy
-
-dictdata = dict()
-dictdata["0"]= numpy.random.randint(5,size=(100,3))
-dictdata["31"]= numpy.random.randint(5,size=(100,3))
-dictdata["56"]= numpy.random.randint(5,size=(100,3))
-dictdata["100"]= numpy.random.randint(5,size=(100,3))
-direction = "positive"
 
 '''
 This function enables us to write bias data to a file.
@@ -26,7 +18,7 @@ def writeBiasFile(extrainfo,dictdata,direction,total_stress,filename):
         file1.write(key+" = "+extrainfo[key]+"\n")
     file1.write("################### END EXTRA INFO ######################\n")
     file1.write("[DATA-SCHEME = DRAIN CURRENT \t GATE CURRENT \t GATE VOLTAGE]\n")
-    file1.write("[DATA-START DIRECTION='"+str(direction)+' TOTAL STRESS= '+str(total_stress)+']'+"\n")
+    file1.write("[DATA-START DIRECTION= "+str(direction)+" TOTAL STRESS= "+str(total_stress)+']'+"\n")
     for key in dictdata:
         file1.write("[SWEEP ON T= "+key+" ]"+"\n")
         biasdata = dictdata[key]

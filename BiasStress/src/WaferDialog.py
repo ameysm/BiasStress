@@ -31,7 +31,7 @@ class WaferDialog(QDialog):
         index = str(self.dialog.index_value.text())
         date_code = str(self.dialog.date_code.text())
         if alias.strip() =="" or proc_step.strip() == "" or index.strip() == "" or date_code.strip=="":
-            QtGui.QMessageBox.warning(None, QtCore.QString('Value error'), QtCore.QString('One or more invalid values were detected.'))
+            QtGui.QMessageBox.warning(None, QtCore.QString('Value error'), QtCore.QString('One or more invalid values were detected. Make sure non are empty.'))
             return
         try:
             self.createWaferDir(date_code,index)

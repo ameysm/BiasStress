@@ -94,7 +94,7 @@ class TFTController(AbstractController):
         self.__ui.step.setText(self.__currentTft.getStep())
     
 
-    def performSweep(self, gateDevice, drainDevice, gate_smu, drain_smu, start, stop, drain,step,boolBackwards):
+    def performSweep(self, gateDevice, drainDevice, gate_smu, drain_smu, start, stop, drain,step,delay,boolBackwards):
         gateDevice.reset()
         drainDevice.reset()
         gateDevice.clear_buffer()
@@ -114,7 +114,7 @@ class TFTController(AbstractController):
         step_val = str(step)
         if boolBackwards == True:
             step_val = str(-step)
-        script = 'for x = 1, ' + str(punten) + ' do ' + gate_smu + '.source.levelv = ' + str(start) + ' + x * ' + step_val + ' delay(0.05) ' + gate_smu + '.measure.i(' + gate_smu + '.nvbuffer1)  ' + drain_smu + '.measure.i(' + drain_smu + '.nvbuffer1) waitcomplete() end count=' + gate_smu + '.nvbuffer1.n print("OK", count)'
+        script = 'for x = 1, ' + str(punten) + ' do ' + gate_smu + '.source.levelv = ' + str(start) + ' + x * ' + step_val + ' delay('+str(delay)+') ' + gate_smu + '.measure.i(' + gate_smu + '.nvbuffer1)  ' + drain_smu + '.measure.i(' + drain_smu + '.nvbuffer1) waitcomplete() end count=' + gate_smu + '.nvbuffer1.n print("OK", count)'
         gateDevice.write(script)
         readout = gateDevice.read()
         status = readout[0:2]
@@ -132,6 +132,15 @@ class TFTController(AbstractController):
         return vgs, igs, ids
 
     def tftRun(self):
+        try:
+            start = int(self.__ui.vgstart.text())
+            stop = int(self.__ui.vgend.text())
+            step = float(self.__ui.step.text())
+            drain = float(self.__ui.vds.text())
+            delay = float(self.__ui.delayValue.text())
+        except ValueError:
+            self.__logger.log(Logger.ERROR,"Make sure all values are entered correctly. Some values seem to contain non numerical values.")
+            return
         gateDevice = self.getDeviceController().getDeviceMappedToNode('Vg')
         drainDevice = self.getDeviceController().getDeviceMappedToNode('Vd')
         sourceDevice = self.getDeviceController().getDeviceMappedToNode('Vs')
@@ -154,10 +163,7 @@ class TFTController(AbstractController):
         gate_smu = gateDevice.getScriptSyntax()
         drain_smu = drainDevice.getScriptSyntax()
         
-        start = int(self.__ui.vgstart.text())
-        stop = int(self.__ui.vgend.text())
-        step = float(self.__ui.step.text())
-        drain = float(self.__ui.vds.text())
+            
         try: 
             vgs, igs, ids = self.performSweep(gateDevice, drainDevice, gate_smu, drain_smu, start, stop,drain, step,False)
         except VisaIOError:
@@ -170,7 +176,7 @@ class TFTController(AbstractController):
     
         if boolFWBW:
             try:
-                vgs_back,igs_back,ids_back = self.performSweep(gateDevice, drainDevice, gate_smu, drain_smu, stop, start,drain, step,True)
+                vgs_back,igs_back,ids_back = self.performSweep(gateDevice, drainDevice, gate_smu, drain_smu, stop, start,drain, step,delay,True)
             except VisaIOError:
                 gateDevice.set_output_off()
                 drainDevice.set_output_off()
@@ -325,9 +331,9 @@ class BiasController():
         
         tft_number = str(self.__ui.tft_number.text())
         tft_loc = str(self.__ui.tft_location.text())
-        
-        if tft_number.strip() == "" or tft_loc.strip() == "":
-            self.__logger.log(Logger.ERROR,"TFT Number and TFT Location can not be empty. The current bias data will be saved as 'default_data.bias' in the current working dir.")
+        sample = str(self.__ui.sampleValue.text())
+        if tft_number.strip() == "" or tft_loc.strip() == "" or sample.strip()=="":
+            self.__logger.log(Logger.ERROR,"TFT Number, TFT Location and/or TFT Sample can not be empty. The current bias data will be saved as 'default_data.bias' in the current working dir.")
             return "default_data"
         try:
             float(tft_number)
@@ -335,7 +341,7 @@ class BiasController():
             self.__logger.log(Logger.ERROR,"TFT Number can only be numerical. The current bias data will be saved as 'default_data.bias' in the current working directory.")
             return "default_data"
        
-        return "BIAS_TFT_"+tft_number+"_"+tft_loc
+        return "BIAS_TFT_"+sample+"_"+tft_loc+"_"+tft_number
             
     def resetBias(self):
         self.runActive = False

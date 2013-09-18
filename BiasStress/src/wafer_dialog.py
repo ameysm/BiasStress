@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'wafer_dialog.ui'
 #
-# Created: Fri Sep 13 14:57:53 2013
+# Created: Wed Sep 18 09:53:06 2013
 #      by: PyQt4 UI code generator 4.9.6
 #
 # WARNING! All changes made in this file will be lost!
@@ -37,7 +37,7 @@ class Ui_Dialog(object):
         self.label.setObjectName(_fromUtf8("label"))
         self.formLayout.setWidget(0, QtGui.QFormLayout.LabelRole, self.label)
         self.date_code = QtGui.QLineEdit(self.formLayoutWidget)
-        self.date_code.setReadOnly(True)
+        self.date_code.setReadOnly(False)
         self.date_code.setObjectName(_fromUtf8("date_code"))
         self.formLayout.setWidget(0, QtGui.QFormLayout.FieldRole, self.date_code)
         self.label_2 = QtGui.QLabel(self.formLayoutWidget)
