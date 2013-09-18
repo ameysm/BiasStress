@@ -10,6 +10,7 @@ This function enables us to write bias data to a file.
 @param total_stress: is the total_stress time that was used to measure the TFT
 @param filename: A given filename under which the file should be saved
 '''
+from Logger import Logger
 def writeBiasFile(extrainfo,dictdata,direction,total_stress,filename):
     completeName = filename
     file1 = open(completeName,"w")
@@ -31,4 +32,48 @@ def writeBiasFile(extrainfo,dictdata,direction,total_stress,filename):
             i=i+1
         file1.write("[SWEEP END]"+"\n")
     file1.write("[DATA-END]")
+    file1.close()
 
+class BiasFileWriter(object):
+    
+    def __init__(self,path,logger):
+        self.__path = path
+        self.__logger = logger
+        
+    def writeHeader(self,extrainfo,direction,total_stress):
+        try:
+            myfile = open(self.__path,"w")
+            myfile.write("##################### EXTRA INFO ########################\n")
+            for key in extrainfo:
+                myfile.write(key+" = "+extrainfo[key]+"\n")
+            myfile.write("################### END EXTRA INFO ######################\n")
+            myfile.write("[DATA-SCHEME = DRAIN CURRENT \t GATE CURRENT \t GATE VOLTAGE]\n")
+            myfile.write("[DATA-START DIRECTION= "+str(direction)+" TOTAL STRESS= "+str(total_stress)+']'+"\n")
+            myfile.write("[DATA-END]")
+            myfile.close()
+            self.__logger.log(Logger.INFO,"Bias data file created at "+str(self.__path))
+        except OSError:
+            raise
+    
+    def appendSweepData(self,timestamp,biasdata):
+        try:
+            myfile = open(self.__path,"r")
+            lines = myfile.readlines()
+            myfile.close()
+            myfile = open(self.__path,"w")
+            myfile.writelines([item for item in lines[:-1]])
+            myfile.write("[SWEEP ON T= "+timestamp+" ]"+"\n")
+            d = biasdata.getDrainList()
+            g = biasdata.getGateList()
+            v = biasdata.getVoltageList()
+            i = 0
+            while i < len(d) :
+                myfile.write(str(d[i])+"\t"+str(g[i])+"\t"+str(v[i])+"\n")
+                i=i+1
+            myfile.write("[SWEEP END]"+"\n")
+            myfile.write("[DATA-END]")
+            myfile.close()
+            self.__logger.log(Logger.INFO,"Appended sweep data at "+str(self.__path))
+        except OSError:
+            raise
+            

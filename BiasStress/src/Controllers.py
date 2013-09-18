@@ -11,6 +11,7 @@ import Toolbox
 from visa import VisaIOError
 import Data
 from pylab import savefig
+from DataWriter import BiasFileWriter
 '''
 Created on Sep 5, 2013
 
@@ -280,6 +281,12 @@ class BiasController():
         extrainfo['sweep gate start'] = str(self.start)+" V"
         extrainfo['sweep gate end'] = str(self.stop)+" V"
         extrainfo['sweep drain'] = str(self.tft_drain)+" V"
+        direction = "negative"
+        if self.__ui.positiveBiasDirection.isChecked() == True:
+            direction = "positive"
+        base_name = self.construct_filename()
+        filewriter = BiasFileWriter(self.__wafercontroller.get_current_wafer_dir()+"/"+base_name+".bias",self.__logger)
+        filewriter.writeHeader(extrainfo, direction, self.totaltime)
         init_time = time.time()
         for t in range(0, len(tijd_lijst)):
             QtGui.QApplication.processEvents()
@@ -310,20 +317,19 @@ class BiasController():
             self.__plotcontroller.plotIV_bias(ids,vgs)
             gateDevice.set_output_on()
             drainDevice.set_output_on()
-            datadict[str(tijd_lijst[t])] = Data.BiasPacket(igs, ids, vgs)
+            
             #Apply Bias
             gateDevice.set_output_volts(self.gate_bias)
             drainDevice.set_output_volts(self.drain_bias)
+            #datadict[str(tijd_lijst[t])] = Data.BiasPacket(igs, ids, vgs)
+            t = Thread(target=filewriter.appendSweepData,args=(str(tijd_lijst[t]),Data.BiasPacket(igs, ids, vgs)))
+            t.start()
             
         end_time = time.time()  
         gateDevice.set_output_off()
         drainDevice.set_output_off()
         self.__logger.log(Logger.INFO, 'Bias run completed in %d sec' %(end_time - init_time))
-        direction = "negative"
-        if self.__ui.positiveBiasDirection.isChecked() == True:
-            direction = "positive"
-        base_name = self.construct_filename()
-        DataWriter.writeBiasFile(extrainfo,datadict, direction, self.totaltime, self.__wafercontroller.get_current_wafer_dir()+"/"+base_name+".bias")
+        #DataWriter.writeBiasFile(extrainfo,datadict, direction, self.totaltime, self.__wafercontroller.get_current_wafer_dir()+"/"+base_name+".bias")
         self.__plotcontroller.saveCurrentPlot(self.__wafercontroller.get_current_wafer_dir()+"/"+base_name+".png")
         self.resetBias()
     
