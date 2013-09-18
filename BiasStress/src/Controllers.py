@@ -328,6 +328,9 @@ class BiasController():
         self.resetBias()
     
     def construct_filename(self):
+        direction = "negative"
+        if self.__ui.positiveBiasDirection.isChecked() == True:
+            direction = "positive"
         
         tft_number = str(self.__ui.tft_number.text())
         tft_loc = str(self.__ui.tft_location.text())
@@ -341,7 +344,7 @@ class BiasController():
             self.__logger.log(Logger.ERROR,"TFT Number can only be numerical. The current bias data will be saved as 'default_data.bias' in the current working directory.")
             return "default_data"
        
-        return "BIAS_TFT_"+sample+"_"+tft_loc+"_"+tft_number
+        return "BIAS_TFT_"+sample+"_"+tft_loc+"_"+tft_number+"_"+direction
             
     def resetBias(self):
         self.runActive = False
