@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'main_view.ui'
 #
-# Created: Wed Sep 18 09:57:12 2013
+# Created: Thu Sep 19 14:39:39 2013
 #      by: PyQt4 UI code generator 4.9.6
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
-        MainWindow.resize(1196, 757)
+        MainWindow.resize(1179, 757)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -407,10 +407,10 @@ class Ui_MainWindow(object):
         self.runTFT.setGeometry(QtCore.QRect(230, 20, 99, 23))
         self.runTFT.setObjectName(_fromUtf8("runTFT"))
         self.groupBox_6 = QtGui.QGroupBox(self.tftwidget)
-        self.groupBox_6.setGeometry(QtCore.QRect(410, 10, 391, 221))
+        self.groupBox_6.setGeometry(QtCore.QRect(400, 10, 241, 221))
         self.groupBox_6.setObjectName(_fromUtf8("groupBox_6"))
         self.formLayoutWidget_7 = QtGui.QWidget(self.groupBox_6)
-        self.formLayoutWidget_7.setGeometry(QtCore.QRect(10, 20, 301, 161))
+        self.formLayoutWidget_7.setGeometry(QtCore.QRect(10, 20, 221, 161))
         self.formLayoutWidget_7.setObjectName(_fromUtf8("formLayoutWidget_7"))
         self.formLayout_7 = QtGui.QFormLayout(self.formLayoutWidget_7)
         self.formLayout_7.setMargin(0)
@@ -452,7 +452,7 @@ class Ui_MainWindow(object):
         self.label_8.setObjectName(_fromUtf8("label_8"))
         self.formLayout_7.setWidget(5, QtGui.QFormLayout.LabelRole, self.label_8)
         self.actionSaveTFTConfig = QtGui.QPushButton(self.groupBox_6)
-        self.actionSaveTFTConfig.setGeometry(QtCore.QRect(240, 180, 75, 23))
+        self.actionSaveTFTConfig.setGeometry(QtCore.QRect(160, 190, 75, 23))
         self.actionSaveTFTConfig.setObjectName(_fromUtf8("actionSaveTFTConfig"))
         self.tabWidget.addTab(self.tftwidget, _fromUtf8(""))
         self.bias = QtGui.QWidget()
@@ -686,7 +686,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_4.addWidget(self.actionNewDb)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1196, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1179, 21))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menuQuit = QtGui.QMenu(self.menubar)
         self.menuQuit.setObjectName(_fromUtf8("menuQuit"))
