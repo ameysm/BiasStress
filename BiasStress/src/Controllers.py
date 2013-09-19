@@ -823,6 +823,7 @@ class PlotController(object):
         self.__plotWidget.canvas.ax.set_xlabel("V_gate")
         self.__plotWidget.canvas.ax.set_ylabel("I (log scale)")
         self.__plotWidget.canvas.ax.set_yscale('log')
+        self.__plotWidget.canvas.ax.grid(True)
         self.__plotWidget.canvas.ax.plot(V,Id,'g',label='I_ds')
         self.__plotWidget.canvas.ax.plot(V,Ig,'r--',label='I_gs')
         if Id_back != None:
@@ -841,6 +842,7 @@ class PlotController(object):
         self.__plotWidget.canvas.ax.set_xlabel("V_gate")
         self.__plotWidget.canvas.ax.set_ylabel("I (log scale)")
         self.__plotWidget.canvas.ax.set_yscale('log')
+        self.__plotWidget.canvas.ax.grid(True)
         self.__plotWidget.canvas.ax.plot(V,Id,'g',label='I_ds')
         self.__plotWidget.canvas.draw()
     '''
