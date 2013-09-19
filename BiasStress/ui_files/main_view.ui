@@ -541,7 +541,7 @@
      <enum>QTabWidget::North</enum>
     </property>
     <property name="currentIndex">
-     <number>2</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -906,7 +906,7 @@
          <x>10</x>
          <y>20</y>
          <width>211</width>
-         <height>131</height>
+         <height>191</height>
         </rect>
        </property>
        <layout class="QFormLayout" name="formLayout">
@@ -966,7 +966,7 @@
         <item row="3" column="1">
          <widget class="QLineEdit" name="step"/>
         </item>
-        <item row="4" column="0">
+        <item row="5" column="0">
          <widget class="QCheckBox" name="boolFWBW">
           <property name="text">
            <string>Forward + Backward</string>
@@ -975,6 +975,16 @@
            <bool>false</bool>
           </property>
          </widget>
+        </item>
+        <item row="4" column="0">
+         <widget class="QLabel" name="label_29">
+          <property name="text">
+           <string>Delay</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="1">
+         <widget class="QLineEdit" name="delayValue"/>
         </item>
        </layout>
       </widget>
@@ -1388,6 +1398,16 @@
          <widget class="QLineEdit" name="tft_location">
           <property name="placeholderText">
            <string>ie. J6</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QLineEdit" name="sampleValue"/>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_28">
+          <property name="text">
+           <string>SAMPLE</string>
           </property>
          </widget>
         </item>
