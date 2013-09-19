@@ -833,6 +833,7 @@ class PlotController(object):
             self.__plotWidget.canvas.ax.plot(Vg_back,Ig_back,'r--',label='I_gs_back')
         legend = self.__plotWidget.canvas.ax.legend(loc='upper left', shadow=True)
         self.__plotWidget.canvas.draw()
+        
     '''
     Plot a bias run
     '''
@@ -845,6 +846,7 @@ class PlotController(object):
         self.__plotWidget.canvas.ax.grid(True)
         self.__plotWidget.canvas.ax.plot(V,Id,'g',label='I_ds')
         self.__plotWidget.canvas.draw()
+        
     '''
     Save the current displayed plot
     '''
@@ -857,6 +859,7 @@ This class acts as a layer to the connected database. Every database operation s
 On runtime every db operation should be routed through this controller.
 '''
 class DatabaseController(object):
+    
     '''
     Initialize a database controller
     '''    
@@ -867,6 +870,7 @@ class DatabaseController(object):
         self.__currentConnection = None
         self.__tftController = tftController
         self.__ui.actionSaveTFTConfig.setEnabled(False)
+        
     '''
     Let the user choose a database file
     '''
@@ -893,6 +897,7 @@ class DatabaseController(object):
         self.__currentConnection.commit()
         self.__currentConnection.close()
         self.updateUiStatus()
+        
     '''
     Notify the UI.
     '''      
@@ -900,11 +905,13 @@ class DatabaseController(object):
         self.__ui.database_status_text.setText("Current database : "+os.path.basename(str(self.__currentdbpath)))
         self.__logger.log(Logger.INFO,"Loaded working database "+ os.path.basename(str(self.__currentdbpath)))
         self.__ui.actionSaveTFTConfig.setEnabled(True)
+        
     '''
     Notify tft controller new characteristics are loaded from the database.
     '''
     def notifyTFTController(self):
         self.__tftController.addCharacteristics(self.getAllTftConfigurations())
+        
     '''
     save the current tft configuration
     '''    
@@ -945,6 +952,7 @@ class DatabaseController(object):
 This class controls and manages all the wafers in this application.
 '''
 class WaferController(object):
+    
     '''
     Initialze a new WaferController
     '''
@@ -953,27 +961,32 @@ class WaferController(object):
         self.__current_wafer = None
         self.__wafer = []
         self.__logger = logger
+        
     '''
     Get the current working directory
     '''
     def getCurrentWorkingDir(self):
         return self.__current_work_dir
+    
     '''
     Get the current wafer
     '''
     def getCurrentWafer(self):
         return self.__current_wafer
+    
     '''
     Set the current wafer.
     '''
     def setCurrentWafer(self,wafer):
         self.__current_wafer = wafer
         self.__logger.log(Logger.INFO,"current working wafer is set to : "+self.getCurrentWafer().getWaferName())
+        
     '''
     Add a wafer.
     '''
     def addWafer(self,wafer):
         self.__wafer.append(wafer)
+        
     '''
     Get the current wafer directory
     '''
