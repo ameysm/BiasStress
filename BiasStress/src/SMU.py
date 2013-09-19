@@ -6,8 +6,7 @@ One for every channel.
 
 @author: Incalza Dario
 '''
-import visa,os
-from numpy.ma.core import ids
+import os
 
 class SMU(object):
     

@@ -9,8 +9,9 @@
 		<constant name="compliance_voltage" value="30"/>
 		<constant name="vg_start" value="-20"/>
 		<constant name="vg_end" value="20"/>
-		<constant name="step" value="2e-1"/>
+		<constant name="step" value="0.2"/>
 		<constant name="vds" value="1"/>
+		<constant name="delay" value="0.05"/>
 	</constants>
 	<devices>
 		<!--- following devices are a default mapping. These will be loaded when the user presses the auto connect button -->

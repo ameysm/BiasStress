@@ -74,6 +74,7 @@ class SettingsParser(object):
         node_values.append(self.getConstantValue('vg_end'))
         node_values.append(self.getConstantValue('step'))
         node_values.append(self.getConstantValue('vds'))
+        node_values.append(self.getConstantValue('delay'))
         
         return node_values
 

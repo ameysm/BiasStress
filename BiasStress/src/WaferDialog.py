@@ -34,7 +34,7 @@ class WaferDialog(QDialog):
             QtGui.QMessageBox.warning(None, QtCore.QString('Value error'), QtCore.QString('One or more invalid values were detected. Make sure non are empty.'))
             return
         try:
-            self.createWaferDir(date_code,index)
+            self.createWaferDir(alias,date_code,index)
         except OSError:
             QtGui.QMessageBox.warning(None, QtCore.QString('Direction error'), QtCore.QString('Do you have read and write rights in the working directory, specified in settings.xml ?'))
             return
@@ -43,8 +43,8 @@ class WaferDialog(QDialog):
         self.__wafercontroller.setCurrentWafer(wafer)
         self.close()
     
-    def createWaferDir(self,date_code,index):
-        path = self.__working_dir+"//"+date_code+"//"+index
+    def createWaferDir(self,alias,date_code,index):
+        path = self.__working_dir+"//"+alias+date_code+"//"+index
         if os.path.isdir(path) == True :
             return
         else:

@@ -40,14 +40,15 @@ class TFTController(AbstractController):
         self.DEFAULT_VGS_END= defaultnodevalues[1]
         self.DEFAULT_VDS= defaultnodevalues[3]
         self.DEFAULT_STEP = defaultnodevalues[2]
+        self.DEFAULT_DELAY = defaultnodevalues[4]
         self.__ui=ui
         self.__currentTft = TFT(defaultnodevalues)
         self.__logger=logger
         self.__plotcontroller=plotcontroller
-        self.setTFTValues()
+        self.resetTFTValues()
         self.__characteristics = characteristics
         self.loadCharacteristics()
-    
+        
     def addCharacteristics(self,chars):
         self.__characteristics = chars+self.__characteristics
         self.loadCharacteristics()
@@ -85,7 +86,8 @@ class TFTController(AbstractController):
         self.__ui.vgend.setText(self.DEFAULT_VGS_END)
         self.__ui.vds.setText(self.DEFAULT_VDS)
         self.__ui.step.setText(self.DEFAULT_STEP)
-        self.__logger.log(Logger.INFO,'TFT Values reset')
+        self.__ui.delayValue.setText(self.DEFAULT_DELAY)
+        
 
     
     def setTFTValues(self):
@@ -166,7 +168,7 @@ class TFTController(AbstractController):
         
             
         try: 
-            vgs, igs, ids = self.performSweep(gateDevice, drainDevice, gate_smu, drain_smu, start, stop,drain, step,False)
+            vgs, igs, ids = self.performSweep(gateDevice, drainDevice, gate_smu, drain_smu, start, stop,drain, step,delay,False)
         except VisaIOError:
             gateDevice.set_output_off()
             drainDevice.set_output_off()
@@ -241,6 +243,7 @@ class BiasController():
             self.start = int(self.__ui.vgstart.text())
             self.stop = int(self.__ui.vgend.text())
             self.step = float(self.__ui.step.text())
+            self.delay = float(self.__ui.delayValue.text())
             self.tft_drain = float(self.__ui.vds.text())
         except ValueError:
             self.__logger.log(Logger.ERROR,"Invalid BIAS values (decades,totaltime,bias stress,...) please correct these before retrying")
@@ -251,10 +254,7 @@ class BiasController():
     def performBias(self):
         extrainfo = dict()
         datadict = dict()
-        self.runActive = True
-        self.__ui.actionBiasRun.setEnabled(False)
-        self.__ui.actionAbortBiasStress.setEnabled(True)
-        self.__ui.tftwidget.setEnabled(False)
+        
         gateDevice = self.__devicecontroller.getDeviceMappedToNode('Vg')
         drainDevice = self.__devicecontroller.getDeviceMappedToNode('Vd')
         sourceDevice = self.__devicecontroller.getDeviceMappedToNode('Vs')
@@ -287,6 +287,10 @@ class BiasController():
         base_name = self.construct_filename()
         filewriter = BiasFileWriter(self.__wafercontroller.get_current_wafer_dir()+"/"+base_name+".bias",self.__logger)
         filewriter.writeHeader(extrainfo, direction, self.totaltime)
+        self.runActive = True
+        self.__ui.actionBiasRun.setEnabled(False)
+        self.__ui.actionAbortBiasStress.setEnabled(True)
+        self.__ui.tftwidget.setEnabled(False)
         init_time = time.time()
         for t in range(0, len(tijd_lijst)):
             QtGui.QApplication.processEvents()
@@ -312,7 +316,7 @@ class BiasController():
             
             gate_smu = gateDevice.getScriptSyntax()
             drain_smu = drainDevice.getScriptSyntax()
-            vgs, igs, ids = self.__tftcontroller.performSweep(gateDevice,drainDevice,gate_smu,drain_smu,self.start, self.stop,1,self.step,False)
+            vgs, igs, ids = self.__tftcontroller.performSweep(gateDevice,drainDevice,gate_smu,drain_smu,self.start, self.stop,1,self.step,self.delay,False)
             self.__logger.log(Logger.INFO,'Sweep on timestamp %d sec - done' % (tijd_lijst[t]))
             self.__plotcontroller.plotIV_bias(ids,vgs)
             gateDevice.set_output_on()
@@ -321,7 +325,6 @@ class BiasController():
             #Apply Bias
             gateDevice.set_output_volts(self.gate_bias)
             drainDevice.set_output_volts(self.drain_bias)
-            #datadict[str(tijd_lijst[t])] = Data.BiasPacket(igs, ids, vgs)
             t = Thread(target=filewriter.appendSweepData,args=(str(tijd_lijst[t]),Data.BiasPacket(igs, ids, vgs)))
             t.start()
             
@@ -329,7 +332,6 @@ class BiasController():
         gateDevice.set_output_off()
         drainDevice.set_output_off()
         self.__logger.log(Logger.INFO, 'Bias run completed in %d sec' %(end_time - init_time))
-        #DataWriter.writeBiasFile(extrainfo,datadict, direction, self.totaltime, self.__wafercontroller.get_current_wafer_dir()+"/"+base_name+".bias")
         self.__plotcontroller.saveCurrentPlot(self.__wafercontroller.get_current_wafer_dir()+"/"+base_name+".png")
         self.resetBias()
     
