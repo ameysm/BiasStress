@@ -34,6 +34,9 @@ Every db operation is routed through a dbController and every plot operation is 
 '''
 class TFTController(AbstractController):
     
+    '''
+    Initialize the TFTController
+    '''
     def __init__(self,devicecontroller,ui,logger,plotcontroller,characteristics,defaultnodevalues):
         AbstractController.__init__(self, devicecontroller)
         self.DEFAULT_VGS_START = defaultnodevalues[0]
@@ -48,11 +51,15 @@ class TFTController(AbstractController):
         self.resetTFTValues()
         self.__characteristics = characteristics
         self.loadCharacteristics()
-        
+    '''
+    Add a  TFT characteristic
+    '''   
     def addCharacteristics(self,chars):
         self.__characteristics = chars+self.__characteristics
         self.loadCharacteristics()
-        
+    '''
+    Load default characteristics
+    '''  
     def loadCharacteristics(self):
         self.__ui.oxideCombo.clear()
         availableoxides = []
@@ -65,7 +72,9 @@ class TFTController(AbstractController):
         self.__ui.oxideCombo.currentIndexChanged['QString'].connect(self.oxideChoiceChanged)
         self.__ui.oxideCombo.addItems(availableoxides)
         
-    
+    '''
+    Update the GUI when the oxide choice is changed by the user
+    '''
     def oxideChoiceChanged(self):
         name = str(self.__ui.oxideCombo.currentText())
         if name.strip() == "":
@@ -80,7 +89,9 @@ class TFTController(AbstractController):
         self.__ui.tft_w.setText(QtCore.QString(choice.getW()))
         self.__ui.tft_l.setText(QtCore.QString(choice.getL()))
         
-    
+    '''
+    Reset to default tft values, specified in the settings.xml
+    '''
     def resetTFTValues(self):
         self.__ui.vgstart.setText(self.DEFAULT_VGS_START)
         self.__ui.vgend.setText(self.DEFAULT_VGS_END)
@@ -89,14 +100,27 @@ class TFTController(AbstractController):
         self.__ui.delayValue.setText(self.DEFAULT_DELAY)
         
 
-    
+    '''
+    Set the tft values that are present in the current tft.
+    '''
     def setTFTValues(self):
         self.__ui.vgstart.setText(self.__currentTft.getVgStart())
         self.__ui.vgend.setText(self.__currentTft.getVgEnd())
         self.__ui.vds.setText(self.__currentTft.getVds())
         self.__ui.step.setText(self.__currentTft.getStep())
     
-
+    '''
+    Perform a sweep on a tft device.
+    @param gateDevice: this is an SMU object mapped to the gate node
+    @param drainDevice: this is an SMU object mapped to the drain node
+    @param gate_smu,drain_smu: a string 'smua' or 'smub' depends on the mapping
+    @param start: the start gate voltage
+    @param stop: the stop gate voltage
+    @param drain: the drain voltage
+    @param step: the step 
+    @param delay: the delay used in the script on the SMU
+    @param boolbackwards: boolean if we are performing a backwards sweep. Essential to determine a positive or negative step
+    '''
     def performSweep(self, gateDevice, drainDevice, gate_smu, drain_smu, start, stop, drain,step,delay,boolBackwards):
         gateDevice.reset()
         drainDevice.reset()
@@ -133,7 +157,10 @@ class TFTController(AbstractController):
         drainDevice.set_output_off()
        
         return vgs, igs, ids
-
+    
+    '''
+    Perform a single tft run
+    '''
     def tftRun(self):
         try:
             start = int(self.__ui.vgstart.text())
@@ -199,6 +226,10 @@ This class controls every aspect of managing the BIAS tabwidget and
 '''  
 import time      
 class BiasController():
+    
+    '''
+    Initialize a BiasController
+    '''
     def __init__(self,ui,logger,tftcontroller,devicecontroller,plotcontroller,wafercontroller):
         self.__ui = ui
         self.__logger = logger
@@ -211,11 +242,15 @@ class BiasController():
         self.registerBiasFunctions()
         self.totalpbar = self.__ui.totaltime_run
         self.runActive = False
-
+    '''
+    Register some gui functions to biascontroller code
+    '''
     def registerBiasFunctions(self):
         self.__ui.actionBiasRun.clicked.connect(self.biasRun)
         self.__ui.actionAbortBiasStress.clicked.connect(self.abortRun)
-    
+    '''
+    Abort a run
+    '''
     def abortRun(self):
         if self.runActive == True:
             quit_msg = QtCore.QString("Are you sure you want to abort the current bias stress run ?  All data will be lost.")
@@ -229,7 +264,9 @@ class BiasController():
             else:
                 return
             
-    
+    '''
+    Initialize a bias run
+    '''
     def biasRun(self):
         if self.__wafercontroller.get_current_wafer_dir() == None:
             self.__logger.log(Logger.ERROR,"Create a wafer before performing a bias run ! Make sure the current working directory is not empty.")
@@ -250,7 +287,10 @@ class BiasController():
             return
         self.__logger.log(Logger.INFO,"Decades "+str(self.nrDecades)+", total stress time "+str(self.totaltime))
         self.performBias()
-
+    
+    '''
+    Perform the actual bias run
+    '''
     def performBias(self):
         extrainfo = dict()
         datadict = dict()
@@ -334,7 +374,9 @@ class BiasController():
         self.__logger.log(Logger.INFO, 'Bias run completed in %d sec' %(end_time - init_time))
         self.__plotcontroller.saveCurrentPlot(self.__wafercontroller.get_current_wafer_dir()+"/"+base_name+".png")
         self.resetBias()
-    
+    '''
+    Construct a filename for the .bias file and the plot image.
+    '''
     def construct_filename(self):
         direction = "negative"
         if self.__ui.positiveBiasDirection.isChecked() == True:
@@ -353,7 +395,9 @@ class BiasController():
             return "default_data"
        
         return "BIAS_TFT_"+sample+"_"+tft_loc+"_"+tft_number+"_"+direction
-            
+    '''
+    Reset the bias tab
+    '''       
     def resetBias(self):
         self.runActive = False
         self.__ui.tftwidget.setEnabled(True)
@@ -365,7 +409,9 @@ class BiasController():
         for device in self.__devicecontroller.getAllDevices():
             device.set_output_off()
             device.reset()
-import DataWriter     
+'''
+This class represents a crono. 
+'''            
 class Crono(QtCore.QObject):
     
     tick = QtCore.pyqtSignal(int, name="changed")
@@ -395,7 +441,10 @@ This class controls every aspect of managing the devices to which this applicati
 '''
 
 class DeviceController(AbstractController):
-  
+    
+    '''
+    Initialize a new deviceController
+    '''
     def __init__(self,ui,visa=None):
         AbstractController.__init__(self, visa)
         self.__deviceList = []
@@ -404,7 +453,10 @@ class DeviceController(AbstractController):
         self.__addressList=[]
         self.__nodemapping=dict()
         self.__listeners=[]
-        
+    '''
+    Add a device.
+    @param device: A visa.instrument object after succeful connection.
+    '''    
     def addDevice(self,device):
         if self.getDeviceMappedToNode(device.getNode()) != None:
             return False
@@ -421,7 +473,12 @@ class DeviceController(AbstractController):
             return True
         else:
             return False
-    
+    '''
+    Try a device connection.
+    @param address: a given address on the GPIB/USB bus.
+    @param channel: a given channel 'A' or 'B' 
+    @param node: the node this device should be mapped to
+    '''
     def tryDeviceConnection(self,address,channel,node):
         try:
             device = visa.instrument('GPIB::'+str(address),term_chars='\n', send_end=True)
@@ -430,27 +487,41 @@ class DeviceController(AbstractController):
             return smu
         except VisaIOError:
             return None
-    
+    '''
+    Add a device listener. These will be notified when a new device is added to the application.
+    '''
     def addDeviceListener(self,listener):
         self.__listeners.append(listener)
+    '''
+    Get a device object mapped to a certain node.
+    @param node: on time of writing three different nodes exist :'Vg' or 'Vd' or 'Vs'
+    '''
     def getDeviceMappedToNode(self,node):
         return self.__nodemapping.get(node)
-
+    '''
+    Remove a certain mapping to a given node.
+    '''
     def removeMappingNode(self,node):
         if len(self.__nodemapping) < 3:
             self.__ui.bias.setEnabled(False)
             self.__ui.tftwidget.setEnabled(False)
         self.__nodemapping.pop(node)
-        
+    '''
+    Get a device with a given id.
+    '''
     def getDevice(self,deviceid):
         for device in self.__deviceList:
             if device.getDeviceId() == deviceid:
                 return device
         return None
-    
+    '''
+    Get a list of addresses on which devices are connected.
+    '''
     def getActiveAdresses(self):
         return self.__addressList
-    
+    '''
+    Get a certain device connected through a given address.
+    '''
     def getDevicesOnAdress(self,address):
         devices=[]
         for device in self.__deviceList:
@@ -460,10 +531,15 @@ class DeviceController(AbstractController):
                 else:
                     devices.insert(1, device)
         return devices
-                
+    '''
+    Dump all devices.
+    '''         
     def getAllDevices(self):
         return self.__deviceList
     
+    '''
+    Update the tableview when a new device is added.
+    '''
     def updateTableView(self):
         rows = len(self.__deviceList)
         self.__deviceTable.setRowCount(rows)
@@ -471,13 +547,17 @@ class DeviceController(AbstractController):
         for device in self.__deviceList:
             self.insertDeviceRow(x,device)
             x=x+1
-            
+    '''
+    Insert a row in the tableview
+    '''    
     def insertDeviceRow(self,x,device):
         self.__deviceTable.setItem(x,0, QtGui.QTableWidgetItem(device.getName()))
         self.__deviceTable.setItem(x,1, QtGui.QTableWidgetItem(device.getChannel()))
         self.__deviceTable.setItem(x,2, QtGui.QTableWidgetItem(device.getAddress()))
         self.__deviceTable.setItem(x,3, QtGui.QTableWidgetItem(device.getNode()))
-    
+    '''
+    Delete a certain device by id.
+    '''
     def deleteDevicesById(self,idx,logger):        
         for device in list(self.__deviceList.__iter__()):
             if device.getDeviceId() == idx:
@@ -494,7 +574,9 @@ class DeviceController(AbstractController):
 This class is responsible of controlling and drawing the compliance controls on the compliance tab.
 '''
 class ComplianceController(object):
-
+    '''
+    Initialize a ComplianceController
+    '''
     def __init__(self,ui,devicecontroller,logger,default_i, default_v):
         self.__ui = ui
         self.__deviceController = devicecontroller
@@ -506,11 +588,15 @@ class ComplianceController(object):
         self.__k2_address = None
         self.resetDefaults()
         self.registerButtons()
-    
+    '''
+    Register some button clicks to code in compliance controller
+    '''
     def registerButtons(self):
         self.__ui.apply_compliance_1.clicked.connect(self.applyComplianceK1)
         self.__ui.apply_compliance_2.clicked.connect(self.applyComplianceK2)
-    
+    '''
+    Apply the compliance settings to the first Keithley
+    '''
     def applyComplianceK1(self):
         QtGui.QMessageBox.warning(None, QtCore.QString('Setting compliance levels'), QtCore.QString('This action will set the compliance levels to the given values, be aware this can affect the correct behaviour of the device. Double check the values. '))
         devices = self.__deviceController.getDevicesOnAdress(self.__k1_address)
@@ -529,7 +615,9 @@ class ComplianceController(object):
                 device.set_current_compliance(str(ilim))
                 device.set_voltage_compliance(str(vlim))
                 self.__logger.log(Logger.WARNING,"Compliance levels for current and voltage on device "+device.getName()+" are set, respectively, :"+str(ilim)+' A and '+(vlim)+'V'+' for channel '+device.getChannel())
-    
+    '''
+    Apply the compliance settings to the second Keithley
+    '''
     def applyComplianceK2(self):
         QtGui.QMessageBox.warning(None, QtCore.QString('Setting compliance levels'), QtCore.QString('This action will set the compliance levels to the given values, be aware this can affect the correct behaviour of the device. Double check the values. '))
         devices = self.__deviceController.getDevicesOnAdress(self.__k2_address)
@@ -548,7 +636,9 @@ class ComplianceController(object):
                 device.set_current_compliance(str(ilim))
                 device.set_voltage_compliance(str(vlim))
                 self.__logger.log(Logger.WARNING,"Compliance levels for current and voltage on device "+device.getName()+" are set, respectively, :"+str(ilim)+' A and '+(vlim)+'V'+' for channel '+device.getChannel())              
-    
+    '''
+    Reset values to the default compliance settings in the settings.xml file.
+    '''
     def resetDefaults(self):
         self.__ui.ilim_k1_a.setText(self.DEFAULT_I_LIMIT)
         self.__ui.ilim_k1_b.setText(self.DEFAULT_I_LIMIT)
@@ -560,6 +650,9 @@ class ComplianceController(object):
         self.__ui.vlim_k2_a.setText(self.DEFAULT_V_LIMIT)
         self.__ui.vlim_k2_b.setText(self.DEFAULT_V_LIMIT)
         
+    '''
+    This controller will be notified by the device controller when a new device is added.
+    ''' 
     def notifyDeviceAttached(self,device):
         self.__ui.tftwidget.setEnabled(True)
         self.__ui.bias.setEnabled(True)
@@ -572,14 +665,18 @@ class ComplianceController(object):
             self.__ui.ADDRESS_2.setText('Address = '+device.getAddress())
 
         self.enableComplianceControls(device.getAddress(), device.getChannel(),device.getNode(),True)
-        
+    '''
+    This controller will be notified by the device controller when a device is removed.
+    '''  
     def notifyDeviceRemoved(self,device):
         if len(self.__deviceController.getAllDevices()) == 0:
             self.__ui.tftwidget.setEnabled(False)
             self.__ui.bias.setEnabled(True)
         print('Device removed')
         self.enableComplianceControls(device.getAddress(), device.getChannel(),device.getNode(),False)
-        
+    '''
+    Disable the compliance controls
+    '''
     def disableComplianceControls(self,command):
         if command == 'all':
             self.__ui.box_k1_a.setEnabled(False)
@@ -595,6 +692,9 @@ class ComplianceController(object):
             self.__ui.box_k2_a.setEnabled(False)
             self.__ui.box_k2_b.setEnabled(False)
     
+    '''
+    Enable the compliance controls
+    '''
     def enableComplianceControls(self,address,channel,node,boolToggle):
         if self.__k1_address == address:
             if channel == 'A':
@@ -619,32 +719,45 @@ This class controls everything about the scripts.
 '''
 
 class ScriptController(object):
-
+    '''
+    Initialize a script controller
+    '''
     def __init__(self,scriptTable,devicecontroller,logger):
         self.__table = scriptTable
         self.__scriptList = []
         self.__devicecontroller = devicecontroller
         self.__logger = logger
+    '''
+    Add a script to the script table
+    '''
     def addScript(self,script):
         if self.__scriptList.count(script) == 0:
             self.__scriptList.append(script)
             self.updateTableView()
         else:
             raise ValueError('This script was already added')
-        
+    '''
+    Remove a script from the list
+    '''    
     def removeScript(self,script):
         self.__scriptList.remove(script)
         self.updateTableView()
-    
+    '''
+    Get a script by name.
+    '''
     def getScript(self,name):
         for script in self.__scriptList:
             if script.getName() == name:
                 return script
         raise ValueError("Script with name %n was not found",name)
-    
+    '''
+    Get a list from all scripts
+    '''
     def getAllScripts(self):
         return list(self.__scriptList)
-    
+    '''
+    Update the script tableview
+    '''
     def updateTableView(self):
         rows = len(self.__scriptList)
         self.__table.setRowCount(rows)
@@ -683,17 +796,25 @@ This class is capable of plotting data in the plotwidget
 '''        
 import matplotlib.pyplot as plt
 class PlotController(object):
-
+    '''
+    Initialize a plotcontroller
+    '''
     def __init__(self,plotWidget):
         self.__plotWidget = plotWidget
-        
+    '''
+    Debug function.
+    '''   
     def PlotFunc(self):
         self.clearPlot()
         self.plotIV('C://Users//adminssteudel//Desktop//test.png',[10,100,1000,-100000,100000000],[100,100,100,-100,100],[1,2,3,4,5])
-    
+    '''
+    Clear the plot
+    '''
     def clearPlot(self):
         self.__plotWidget.canvas.ax.cla()
-    
+    '''
+    Plot an IV-curve
+    '''
     def plotIV(self,Id,Ig,V,Id_back=None,Ig_back=None,Vg_back = None):
         self.fig = plt.figure()
         Id = [abs(float(x)) for x in Id]
@@ -711,7 +832,9 @@ class PlotController(object):
             self.__plotWidget.canvas.ax.plot(Vg_back,Ig_back,'r--',label='I_gs_back')
         legend = self.__plotWidget.canvas.ax.legend(loc='upper left', shadow=True)
         self.__plotWidget.canvas.draw()
-    
+    '''
+    Plot a bias run
+    '''
     def plotIV_bias(self,Id,V):
         Id = [abs(float(x)) for x in Id]
         self.__plotWidget.canvas.ax.set_title("I-V Curve")
@@ -720,7 +843,9 @@ class PlotController(object):
         self.__plotWidget.canvas.ax.set_yscale('log')
         self.__plotWidget.canvas.ax.plot(V,Id,'g',label='I_ds')
         self.__plotWidget.canvas.draw()
-    
+    '''
+    Save the current displayed plot
+    '''
     def saveCurrentPlot(self,savepath):
         self.__plotWidget.canvas.getFig().savefig(savepath,dpi=300)
     
@@ -730,7 +855,9 @@ This class acts as a layer to the connected database. Every database operation s
 On runtime every db operation should be routed through this controller.
 '''
 class DatabaseController(object):
-        
+    '''
+    Initialize a database controller
+    '''    
     def __init__(self,ui,logger,tftController):
         self.__ui = ui
         self.__logger = logger
@@ -738,7 +865,9 @@ class DatabaseController(object):
         self.__currentConnection = None
         self.__tftController = tftController
         self.__ui.actionSaveTFTConfig.setEnabled(False)
-    
+    '''
+    Let the user choose a database file
+    '''
     def chooseDatabaseFile(self):
         choice = str(QtGui.QFileDialog.getOpenFileName(None, 'Load working database...',"BiasStress database",'*.sqlite'))
         if choice.strip() != "" :
@@ -749,7 +878,9 @@ class DatabaseController(object):
         else:
             return
         
-        
+    '''
+    Let the user create a new db file
+    '''   
     def createNewDbFile(self):
         choice = str(QtGui.QFileDialog.getSaveFileName(None, "Save database..",'biasdatabase','*.sqlite'))
         if choice.strip() == "":
@@ -760,15 +891,21 @@ class DatabaseController(object):
         self.__currentConnection.commit()
         self.__currentConnection.close()
         self.updateUiStatus()
-            
+    '''
+    Notify the UI.
+    '''      
     def updateUiStatus(self):
         self.__ui.database_status_text.setText("Current database : "+os.path.basename(str(self.__currentdbpath)))
         self.__logger.log(Logger.INFO,"Loaded working database "+ os.path.basename(str(self.__currentdbpath)))
         self.__ui.actionSaveTFTConfig.setEnabled(True)
-    
+    '''
+    Notify tft controller new characteristics are loaded from the database.
+    '''
     def notifyTFTController(self):
         self.__tftController.addCharacteristics(self.getAllTftConfigurations())
-        
+    '''
+    save the current tft configuration
+    '''    
     def saveTftConfiguration(self):
         name,oldconfig = str(self.__ui.oxideCombo.currentText()).split(" - ")
         configname = str(self.__ui.tftConfigname.text())
@@ -788,7 +925,10 @@ class DatabaseController(object):
         self.__logger.log(Logger.INFO,"TFT Configuration saved to database "+os.path.basename(str(self.__currentdbpath)))
         self.__currentConnection.close()
         self.notifyTFTController()
-    
+        
+    '''
+    Get all tft configurations stored in the database.
+    '''
     def getAllTftConfigurations(self):
         tftConfigs = []
         if self.__currentdbpath != None or self.__currentdbpath.strip() != "":   
@@ -803,25 +943,38 @@ class DatabaseController(object):
 This class controls and manages all the wafers in this application.
 '''
 class WaferController(object):
-    
+    '''
+    Initialze a new WaferController
+    '''
     def __init__(self,logger,current_work_dir):
         self.__current_work_dir = current_work_dir
         self.__current_wafer = None
         self.__wafer = []
         self.__logger = logger
+    '''
+    Get the current working directory
+    '''
     def getCurrentWorkingDir(self):
         return self.__current_work_dir
-    
+    '''
+    Get the current wafer
+    '''
     def getCurrentWafer(self):
         return self.__current_wafer
-    
+    '''
+    Set the current wafer.
+    '''
     def setCurrentWafer(self,wafer):
         self.__current_wafer = wafer
         self.__logger.log(Logger.INFO,"current working wafer is set to : "+self.getCurrentWafer().getWaferName())
-    
+    '''
+    Add a wafer.
+    '''
     def addWafer(self,wafer):
         self.__wafer.append(wafer)
-    
+    '''
+    Get the current wafer directory
+    '''
     def get_current_wafer_dir(self):
         if self.__current_wafer == None:
             return None

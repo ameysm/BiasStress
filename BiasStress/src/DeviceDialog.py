@@ -27,7 +27,9 @@ class DeviceDialog(QDialog):
             if self.__deviceManager.getDeviceMappedToNode(k) == None:
                 availableNodes.append(QtCore.QString(k))
         self.dialog.controllingVoltageValue.addItems(availableNodes)
-        
+    '''
+    Add a device to the application
+    '''    
     def addDevice(self):
         address = str(self.dialog.adressValue.text())
         channel = str(self.dialog.channelValue.currentText())

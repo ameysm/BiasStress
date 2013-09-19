@@ -20,7 +20,9 @@ import errno
 class BiasStress(QtGui.QMainWindow):
    
 
-    
+    '''
+    Constructor for the BiasStress application
+    '''
     def __init__(self,parent=None):
         QtGui.QWidget.__init__(self, parent)
         
@@ -51,6 +53,9 @@ class BiasStress(QtGui.QMainWindow):
             QtGui.QMessageBox.warning(None, QtCore.QString('Error settings'), 'The settings file misses a valid working directory. Please fix before restart. Make sure the permissions are valid for the application to access this folder.')
             sys.exit()
     
+    '''
+    Show a wizard that will guide the user through creating a new wafer and setting it as the current working directory.
+    '''
     def showWaferWizard(self):
         dialog = WaferDialog(self, self.__waferController, self.__logger,self.__working_dir)
         dialog.exec_()
@@ -58,7 +63,23 @@ class BiasStress(QtGui.QMainWindow):
             self.ui.currentDirStatus.setText(self.__waferController.get_current_wafer_dir())
         except TypeError:
             self.ui.currentDirStatus.setText("NO WAFER WAS CREATED !!")
-
+            
+    '''
+    Override the closing event for the main window. Controls us to check if the user wants to actually leave.
+    '''
+    def closeEvent(self, event):
+        accept_msg = "Are you sure you want to exit the program ?"
+        reply = QtGui.QMessageBox.question(self, 'Exit ...', 
+                             accept_msg, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+    
+        if reply == QtGui.QMessageBox.Yes:
+            event.accept()
+        else:
+            event.ignore()
+            
+    '''
+    Check the current working directory and if needed create the directory.
+    '''
     def checkWorkingDir(self,d):
         if os.path.isdir(d) == True :
             return
@@ -68,6 +89,9 @@ class BiasStress(QtGui.QMainWindow):
             except OSError as exception:
                 if exception.errno != errno.EEXIST:
                     raise
+    '''
+    Initialize the GUI
+    '''
     def initialize_gui(self):
         self.register_gui_functions()
         self.ui.bias.setEnabled(False)
@@ -76,6 +100,9 @@ class BiasStress(QtGui.QMainWindow):
         self.__logger.log(Logger.INFO,"###### Welcome to BiasStress ######")
         self.__logger.log(Logger.INFO,"All data from runs will be saved in the current working directory : "+self.__working_dir)
     
+    '''
+    Initialize the Bias tab with the default values.
+    '''
     def initializeBiasDefault(self):
         self.ui.stressGateVoltage.setText(self.__settingsParser.getBiasConfig("stress-gate-voltage"))
         self.ui.drainStressVoltage.setText(self.__settingsParser.getBiasConfig("stress-drain-voltage"))
@@ -83,6 +110,9 @@ class BiasStress(QtGui.QMainWindow):
         self.ui.totalTime.setText(self.__settingsParser.getBiasConfig("default-total-stress-time"))
         self.ui.positiveBiasDirection.setChecked(True)
         
+    '''
+    Connect GUI components to actions in the code.
+    '''    
     def register_gui_functions(self):
         self.ui.actionQuit.triggered.connect(QtGui.qApp.quit)
         self.ui.resetTFT.clicked.connect(self.__tftController.resetTFTValues)
@@ -99,7 +129,7 @@ class BiasStress(QtGui.QMainWindow):
         self.ui.actionAutoConnect.clicked.connect(self.autoConnectDevices)
         self.ui.actionBiasResetDefault.clicked.connect(self.initializeBiasDefault)
         self.ui.actionCreate_Wafer.triggered.connect(self.showWaferWizard)
-        
+        self.ui.actionSave_Log.triggered.connect(self.__logger.saveLog)
         ##db actions
         self.ui.actionOpenDatabase.clicked.connect(self.__dbController.chooseDatabaseFile)
         self.ui.actionOpen_Database.triggered.connect(self.__dbController.chooseDatabaseFile)
@@ -107,12 +137,17 @@ class BiasStress(QtGui.QMainWindow):
         self.ui.actionCreate_Database.triggered.connect(self.__dbController.createNewDbFile)
         self.ui.actionSaveTFTConfig.clicked.connect(self.__dbController.saveTftConfiguration)
         
-    
+    '''
+    Show the dialog to add a measuring device to the application.
+    '''
     def showAddDeviceDialog(self):
         
         dialog = DeviceDialog(self,self.__deviceController,self.__logger)
         dialog.exec_()
-
+        
+    '''
+    On toggle we will check with the user if he really wants to enter advanced scripting mode.
+    '''
     def toggleAdvanceScripting(self):
         if self.ui.boolAdvancedScripting.checkState() == QtCore.Qt.Checked:
             accept_msg = "Are you sure you want to enter advanced scripting mode ?"
@@ -131,7 +166,10 @@ class BiasStress(QtGui.QMainWindow):
         self.ui.scriptEditor.setEnabled(boolScripting)
         self.ui.openAdvancedScript.setEnabled(boolScripting)
         self.ui.uploadAdvancedScript.setEnabled(boolScripting)
-    
+        
+    '''
+    Delete all selected devices in the device table.
+    '''
     def deleteDevice(self):
         selectionModel = self.ui.deviceTable.selectionModel()
         deviceIds=[]
@@ -150,7 +188,10 @@ class BiasStress(QtGui.QMainWindow):
         else:
             msg = "No devices where selected"
             QtGui.QMessageBox.information(self, "Remove devices", msg, buttons=QtGui.QMessageBox.Ok, defaultButton=QtGui.QMessageBox.NoButton)
-    
+            
+    '''
+    Autoconnect devices by the specifcations provided in the settings.xml file.
+    '''
     def autoConnectDevices(self):
         for (node,address,channel) in self.__settingsParser.getDefaultDevices():
             smu = self.__deviceController.tryDeviceConnection(address, channel, node)
@@ -164,6 +205,9 @@ class BiasStress(QtGui.QMainWindow):
             else:
                 self.__logger.log(Logger.WARNING,'Default device on address '+address+' and operating on channel '+channel+' is not loaded succesfully. Seems the connection was no initialized correctly. Please ensure the device is turned on and connected through GPIB/USB.')
     
+    '''
+    Ask the user for importing a script file.
+    '''
     def openScript(self):
         path = str(QtGui.QFileDialog.getOpenFileName(self, 'Load Script...', '/home','*.txt'))
         if path.strip() =="":

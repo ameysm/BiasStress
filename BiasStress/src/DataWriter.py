@@ -39,7 +39,9 @@ class BiasFileWriter(object):
     def __init__(self,path,logger):
         self.__path = path
         self.__logger = logger
-        
+    '''
+    Write the header of a .bias data file
+    '''
     def writeHeader(self,extrainfo,direction,total_stress):
         try:
             myfile = open(self.__path,"w")
@@ -54,7 +56,9 @@ class BiasFileWriter(object):
             self.__logger.log(Logger.INFO,"Bias data file created at "+str(self.__path))
         except OSError:
             raise
-    
+    '''
+    Append sweep data to the .bias file
+    '''
     def appendSweepData(self,timestamp,biasdata):
         try:
             myfile = open(self.__path,"r")
