@@ -25,7 +25,7 @@ class BiasStress(QtGui.QMainWindow):
     '''
     def __init__(self,parent=None):
         QtGui.QWidget.__init__(self, parent)
-        
+        self.setWindowIcon(QtGui.QIcon('imec.png'))
         self.ui = Ui_MainWindow()    #note: instance, not the class
         self.ui.setupUi(self)
         self.__logger = Logger(self.ui.logConsole)
